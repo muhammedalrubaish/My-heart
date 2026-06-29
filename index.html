@@ -155,6 +155,8 @@
 
   .file-link { color: var(--primary); text-decoration: none; font-size:.85rem; }
   .file-link:hover { text-decoration: underline; }
+  button.linkbtn { background:none; border:none; cursor:pointer; padding:0; font:inherit; }
+  input[type=file] { width:100%; padding:9px 11px; border:1px solid var(--border); border-radius:9px; background:#fff; font-family:inherit; font-size:.85rem; }
 
   /* simple svg chart */
   .chart-wrap { overflow-x:auto; }
@@ -177,6 +179,14 @@
   footer { text-align:center; color:var(--muted); font-size:.8rem; padding: 24px 16px; }
   .med-note { background: var(--primary-light); border-radius:10px; padding:10px 12px; font-size:.85rem; }
   .hide { display:none !important; }
+
+  #importText {
+    width: 100%; padding: 11px; border: 1px solid var(--border); border-radius: 10px;
+    font-family: inherit; font-size: .95rem; resize: vertical; min-height: 120px; background:#fff;
+  }
+  .import-card { background: var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px; }
+  .import-card .chk { display:flex; gap:8px; align-items:center; margin-bottom:10px; font-weight:600; }
+  .import-card .chk input { width:auto; }
 
   /* جداول قابلة للتمرير أفقياً على الجوال */
   #apptsTable, #labsTable, #reportsTable, #leavesTable, #medsTable, #latestLabs {
@@ -257,6 +267,7 @@
   <nav class="tabs" id="tabs">
     <button data-tab="dash" class="active">🏠 الرئيسية</button>
     <button data-tab="appts">📅 المواعيد</button>
+    <button data-tab="import">📥 استيراد موعد</button>
     <button data-tab="labs">📊 التحاليل</button>
     <button data-tab="reports">🗂️ التقارير</button>
     <button data-tab="leaves">📝 الإجازات</button>
@@ -282,6 +293,20 @@
         <button class="btn" onclick="openApptForm()">+ موعد جديد</button>
       </div>
       <div id="apptsTable" style="margin-top:14px;"></div>
+    </div>
+  </section>
+
+  <!-- IMPORT -->
+  <section id="tab-import" class="hide">
+    <div class="card">
+      <h2>📥 استيراد موعد من رسالة المستشفى</h2>
+      <p class="hint">الصق نص الرسالة النصية كما وصلتك من المستشفى، ثم اضغط «تحليل الرسالة». يتعرّف عليها تلقائياً ويحوّلها لموعد — ويدعم أكثر من رسالة دفعة واحدة.</p>
+      <textarea id="importText" rows="7" placeholder="مثال:&#10;عزيزي المراجع ...&#10;تم حجز موعدك في عيادة ... مبنى 12&#10;يوم الاثنين - 22-03-2027 الساعة 09:55 مركز الأمير سلطان ..."></textarea>
+      <div class="form-actions" style="margin-top:10px;">
+        <button class="btn" onclick="previewImport()">🔍 تحليل الرسالة</button>
+        <button class="btn ghost" type="button" onclick="clearImport()">مسح</button>
+      </div>
+      <form id="importPreview" onsubmit="return false" style="margin-top:16px;"></form>
     </div>
   </section>
 
@@ -424,7 +449,10 @@ const SEED = {
       file:"medical-report-2025-08-06.pdf",
       note:"يشمل: ECG (إيقاع جيبي 60/د)، إيكو (كسر قذف 50%، تضخم شديد بالبطين الأيمن، ارتجاع شديد بالصمام ثلاثي الشرفات)، هولتر، واختبار جهد (Bruce 12 دقيقة). الطبيب: د. خالد سليمان النجاشي." }
   ],
-  leaves: [],
+  leaves: [
+    { id:"seed-lv1", from:"2026-06-29", to:"2026-06-29", days:1, issuer:"مركز الأمير سلطان للقلب — د. خالد النجاشي", file:"sick-leave-2026-06-29.pdf", note:"مشهد مراجعة (صحتي) — رمز GSL26062941879 — من 11:51 ص إلى 2:51 م" },
+    { id:"seed-lv2", from:"2026-06-28", to:"2026-06-28", days:1, issuer:"مركز الأمير سلطان للقلب — د. زكريا البن موسى", file:"sick-leave-2026-06-28.pdf", note:"مشهد مراجعة (صحتي) — رمز GSL26062821957 — من 8:42 إلى 11:42 صباحاً" }
+  ],
   meds: [
     { id:"seed-m1", name:"إمباغليفلوزين (Empagliflozin)", dose:"10 ملغ", freq:"كل صباح", note:"قرص فموي" },
     { id:"seed-m2", name:"إنتريستو (Entresto — Valsartan+Sacubitril)", dose:"100 ملغ (200 ملغ)", freq:"مرتين يومياً (BID)", note:"" },
@@ -702,7 +730,7 @@ function renderReports(){
       <td>${fmtDate(r.date)}</td>
       <td><b>${esc(r.title)}</b></td>
       <td><span class="badge muted">${esc(r.type||"—")}</span></td>
-      <td>${r.file?`<a class="file-link" href="reports/${encodeURIComponent(r.file)}" target="_blank">📎 فتح</a>`:"—"}</td>
+      <td>${fileCell('reports', r)}</td>
       <td>${esc(r.note||"—")}</td>
       <td style="white-space:nowrap;">
         <button class="btn icon" onclick="openReportForm('${r.id}')">✏️</button>
@@ -720,7 +748,11 @@ function openReportForm(id){
         <div class="row"><label>النوع</label><select id="rp-type">${typeOpts}</select></div>
       </div>
       <div class="row"><label>عنوان التقرير *</label><input id="rp-title" required value="${attr(r.title)}" placeholder="مثال: تخطيط قلب — مستشفى الملك فهد"></div>
-      <div class="row"><label>اسم الملف (داخل مجلد reports/)</label><input id="rp-file" value="${attr(r.file)}" placeholder="ecg-2026-06.pdf"></div>
+      <div class="row">
+        <label>📎 ارفع ملف التقرير (PDF أو صورة)</label>
+        <input type="file" id="rp-fileInput" accept="application/pdf,image/*">
+        ${(r.file||r.attachKey)?`<small style="color:var(--muted);display:block;margin-top:6px;">المرفق الحالي: <b>${esc(r.file||'ملف')}</b> — <button type="button" class="btn icon" onclick="openAttachment('reports','${r.id}')">فتح</button> · اترك الحقل فارغاً للإبقاء عليه</small>`:''}
+      </div>
       <div class="row"><label>ملاحظة</label><textarea id="rp-note">${esc(r.note||"")}</textarea></div>
       <div class="form-actions">
         <button class="btn" type="submit">حفظ</button>
@@ -728,10 +760,12 @@ function openReportForm(id){
       </div>
     </form>`);
 }
-function saveReport(e,id){
+async function saveReport(e,id){
   e.preventDefault();
+  const existing = id?data.reports.find(x=>x.id===id):null;
+  const up = await handleUpload("rp-fileInput", existing);
   upsert("reports",{ id:id||uid(), date:val("rp-date"), title:val("rp-title"),
-    type:val("rp-type"), file:val("rp-file"), note:val("rp-note") });
+    type:val("rp-type"), file:up.file, attachKey:up.attachKey, note:val("rp-note") });
   closeDialog(); renderAll();
 }
 
@@ -748,7 +782,7 @@ function renderLeaves(){
       <td>${fmtDate(l.to)}</td>
       <td>${esc(l.days||calcDays(l.from,l.to))} يوم</td>
       <td>${esc(l.issuer||"—")}</td>
-      <td>${l.file?`<a class="file-link" href="reports/${encodeURIComponent(l.file)}" target="_blank">📎 فتح</a>`:"—"}</td>
+      <td>${fileCell('leaves', l)}</td>
       <td style="white-space:nowrap;">
         <button class="btn icon" onclick="openLeaveForm('${l.id}')">✏️</button>
         <button class="btn icon" onclick="del('leaves','${l.id}')">🗑️</button>
@@ -763,7 +797,11 @@ function openLeaveForm(id){
         <div class="row"><label>إلى تاريخ *</label><input type="date" id="lv-to" required value="${l.to||today()}"></div>
       </div>
       <div class="row"><label>الجهة المُصدِرة</label><input id="lv-issuer" value="${attr(l.issuer)}" placeholder="اسم المستشفى / الطبيب"></div>
-      <div class="row"><label>اسم الملف (داخل reports/)</label><input id="lv-file" value="${attr(l.file)}" placeholder="leave-2026-06.pdf"></div>
+      <div class="row">
+        <label>📎 ارفع ملف الإجازة (PDF أو صورة من تطبيق صحتي)</label>
+        <input type="file" id="lv-fileInput" accept="application/pdf,image/*">
+        ${(l.file||l.attachKey)?`<small style="color:var(--muted);display:block;margin-top:6px;">المرفق الحالي: <b>${esc(l.file||'ملف')}</b> — <button type="button" class="btn icon" onclick="openAttachment('leaves','${l.id}')">فتح</button> · اترك الحقل فارغاً للإبقاء عليه</small>`:''}
+      </div>
       <div class="row"><label>ملاحظة</label><input id="lv-note" value="${attr(l.note)}"></div>
       <div class="form-actions">
         <button class="btn" type="submit">حفظ</button>
@@ -771,11 +809,13 @@ function openLeaveForm(id){
       </div>
     </form>`);
 }
-function saveLeave(e,id){
+async function saveLeave(e,id){
   e.preventDefault();
   const from=val("lv-from"), to=val("lv-to");
+  const existing = id?data.leaves.find(x=>x.id===id):null;
+  const up = await handleUpload("lv-fileInput", existing);
   upsert("leaves",{ id:id||uid(), from, to, days:calcDays(from,to),
-    issuer:val("lv-issuer"), file:val("lv-file"), note:val("lv-note") });
+    issuer:val("lv-issuer"), file:up.file, attachKey:up.attachKey, note:val("lv-note") });
   closeDialog(); renderAll();
 }
 function calcDays(from,to){
@@ -831,6 +871,163 @@ function saveMed(e,id){
 }
 
 /* =========================================================
+   استيراد موعد من رسالة المستشفى النصية
+   ========================================================= */
+function parseAppointmentMessages(text){
+  if(!text) return [];
+  // تحويل الأرقام العربية إلى لاتينية
+  const norm = text.replace(/[٠-٩]/g, d=>String(d.charCodeAt(0)-0x0660))
+                   .replace(/[۰-۹]/g, d=>String(d.charCodeAt(0)-0x06F0));
+  // تقسيم لرسائل متعددة
+  let blocks;
+  if(/عزيزي/.test(norm)) blocks = norm.split(/(?=عزيزي)/);
+  else blocks = norm.split(/\n\s*\n/);
+  const out=[];
+  const dateRe=/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/;
+  const timeRe=/(\d{1,2}:\d{2})/;
+  for(const b of blocks){
+    const dm=b.match(dateRe); if(!dm) continue;
+    const date=`${dm[3]}-${dm[2].padStart(2,'0')}-${dm[1].padStart(2,'0')}`;
+    const tm=b.match(timeRe);
+    const time=tm?(tm[1].length===4?'0'+tm[1]:tm[1]):"";
+    let clinic=""; const cm=b.match(/عيادة[^\n]*/); if(cm) clinic=cm[0].trim();
+    let center=""; const ctr=b.match(/مركز[^\n]*/); if(ctr) center=ctr[0].trim();
+    if(clinic && center && clinic.includes(center)) clinic=clinic.replace(center,'').trim();
+    out.push({date,time,clinic,center});
+  }
+  return out;
+}
+
+let _importParsed = [];
+function previewImport(){
+  const text = document.getElementById('importText').value;
+  const parsed = parseAppointmentMessages(text);
+  const box = document.getElementById('importPreview');
+  if(!parsed.length){
+    box.innerHTML = `<div class="empty">لم أتعرّف على أي موعد. تأكد أن الرسالة تحتوي على تاريخ (مثل 22-03-2027) واسم عيادة.</div>`;
+    return;
+  }
+  _importParsed = parsed.map(p=>{
+    const reason = p.center || "موعد محجوز من المستشفى";
+    const dup = data.appointments.some(a=>a.date===p.date && a.time===p.time && a.clinic===p.clinic);
+    return { ...p, reason, dup, };
+  });
+  box.innerHTML = `<p class="hint">✅ تعرّفت على ${parsed.length} موعد. راجع البيانات وعدّل إن لزم، ثم أضف المحدد:</p>`
+    + _importParsed.map((p,i)=>importCard(p,i)).join('')
+    + `<div class="form-actions" style="margin-top:6px;">
+         <button class="btn" type="button" onclick="confirmImport()">➕ إضافة المواعيد المحددة</button>
+       </div>`;
+}
+function importCard(p,i){
+  return `<div class="import-card">
+    <label class="chk">
+      <input type="checkbox" id="imp-inc-${i}" ${p.dup?'':'checked'}>
+      موعد ${i+1}
+      ${p.dup?'<span class="badge warn">قد يكون مضافاً مسبقاً</span>':'<span class="badge ok">جديد</span>'}
+    </label>
+    <div class="form-grid two">
+      <div class="row"><label>التاريخ</label><input type="date" id="imp-date-${i}" value="${p.date}"></div>
+      <div class="row"><label>الوقت</label><input type="time" id="imp-time-${i}" value="${p.time}"></div>
+    </div>
+    <div class="row"><label>العيادة</label><input id="imp-clinic-${i}" value="${attr(p.clinic)}"></div>
+    <div class="row"><label>الجهة / ملاحظة</label><input id="imp-reason-${i}" value="${attr(p.reason)}"></div>
+  </div>`;
+}
+function confirmImport(){
+  let added=0;
+  _importParsed.forEach((p,i)=>{
+    const inc=document.getElementById('imp-inc-'+i);
+    if(!inc || !inc.checked) return;
+    const date=val('imp-date-'+i);
+    if(!date) return;
+    upsert('appointments',{ id:uid(), date, time:val('imp-time-'+i),
+      clinic:val('imp-clinic-'+i), doctor:"", reason:val('imp-reason-'+i), done:false });
+    added++;
+  });
+  clearImport();
+  _importParsed=[];
+  if(added){
+    flash(added===1?'تمت إضافة الموعد ✅':`تمت إضافة ${added} مواعيد ✅`);
+    const apptBtn=document.querySelector('#tabs button[data-tab="appts"]');
+    if(apptBtn) apptBtn.click();
+  } else {
+    flash('لم يتم تحديد أي موعد.');
+  }
+}
+function clearImport(){
+  document.getElementById('importText').value='';
+  document.getElementById('importPreview').innerHTML='';
+}
+
+/* =========================================================
+   تخزين الملفات المرفوعة (IndexedDB) — لإجازات وتقارير صحتي
+   ========================================================= */
+const FILE_DB="qalbi_files", FILE_STORE="files";
+function openFileDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(FILE_DB,1);
+    r.onupgradeneeded=()=>{ r.result.createObjectStore(FILE_STORE); };
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  });
+}
+async function saveFile(key,blob){
+  const db=await openFileDB();
+  return new Promise((res,rej)=>{ const tx=db.transaction(FILE_STORE,"readwrite");
+    tx.objectStore(FILE_STORE).put(blob,key); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); });
+}
+async function getFile(key){
+  const db=await openFileDB();
+  return new Promise((res,rej)=>{ const tx=db.transaction(FILE_STORE,"readonly");
+    const q=tx.objectStore(FILE_STORE).get(key); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); });
+}
+async function removeFile(key){
+  try{ const db=await openFileDB();
+    return new Promise(res=>{ const tx=db.transaction(FILE_STORE,"readwrite");
+      tx.objectStore(FILE_STORE).delete(key); tx.oncomplete=()=>res(); tx.onerror=()=>res(); });
+  }catch(e){}
+}
+function blobToDataURL(blob){ return new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(blob); }); }
+function dataURLToBlob(d){
+  const [meta,b64]=d.split(",");
+  const mime=(meta.match(/:(.*?);/)||[])[1]||"application/octet-stream";
+  const bin=atob(b64); const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+
+// خلية «الملف» في الجداول: مرفق مرفوع، أو ملف من مجلد reports/، أو لا شيء
+function fileCell(coll, rec){
+  if(rec.attachKey) return `<button class="file-link linkbtn" onclick="openAttachment('${coll}','${rec.id}')">📎 فتح</button>`;
+  if(rec.file) return `<a class="file-link" href="reports/${encodeURIComponent(rec.file)}" target="_blank">📎 فتح</a>`;
+  return "—";
+}
+async function openAttachment(coll,id){
+  const rec=data[coll].find(x=>x.id===id);
+  if(!rec) return;
+  if(rec.attachKey){
+    try{
+      const blob=await getFile(rec.attachKey);
+      if(blob){ const url=URL.createObjectURL(blob); window.open(url,"_blank"); setTimeout(()=>URL.revokeObjectURL(url),60000); return; }
+    }catch(e){}
+  }
+  if(rec.file){ window.open("reports/"+encodeURIComponent(rec.file),"_blank"); }
+  else alert("لا يوجد ملف مرفق.");
+}
+// يقرأ ملفاً من حقل input ويخزّنه، ويعيد {attachKey, file}؛ يحذف القديم إن وُجد
+async function handleUpload(inputId, existing){
+  const fi=document.getElementById(inputId);
+  if(fi && fi.files && fi.files[0]){
+    const f=fi.files[0];
+    if(existing && existing.attachKey) await removeFile(existing.attachKey);
+    const key="att_"+uid();
+    await saveFile(key,f);
+    return { attachKey:key, file:f.name };
+  }
+  return { attachKey:(existing&&existing.attachKey)||"", file:(existing&&existing.file)||"" };
+}
+
+/* =========================================================
    Generic CRUD + utils
    ========================================================= */
 function upsert(coll, obj){
@@ -840,6 +1037,8 @@ function upsert(coll, obj){
 }
 function del(coll,id){
   if(!confirm("هل تريد الحذف؟")) return;
+  const rec=data[coll].find(x=>x.id===id);
+  if(rec && rec.attachKey) removeFile(rec.attachKey);
   data[coll]=data[coll].filter(x=>x.id!==id); save(); renderAll();
 }
 function val(id){ const e=document.getElementById(id); return e?e.value.trim():""; }
@@ -856,22 +1055,34 @@ function flash(msg){
   setTimeout(()=>d.remove(),2200);
 }
 
-/* ---------- backup / restore ---------- */
-function exportData(){
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+/* ---------- backup / restore (يشمل الملفات المرفقة) ---------- */
+async function exportData(){
+  const payload=structuredClone(data);
+  const atts={};
+  for(const c of ["leaves","reports"]){
+    for(const r of data[c]){
+      if(r.attachKey){ try{ const blob=await getFile(r.attachKey); if(blob) atts[r.attachKey]=await blobToDataURL(blob); }catch(e){} }
+    }
+  }
+  payload._attachments=atts;
+  const blob=new Blob([JSON.stringify(payload)],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
   a.download=`qalbi-backup-${today()}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
+  flash("تم تنزيل النسخة الاحتياطية (مع المرفقات) ✅");
 }
 function importData(ev){
   const file=ev.target.files[0]; if(!file) return;
   const reader=new FileReader();
-  reader.onload=()=>{
+  reader.onload=async ()=>{
     try{
       const incoming=JSON.parse(reader.result);
-      if(!confirm("سيتم استبدال بياناتك الحالية بمحتوى الملف. متابعة؟")) return;
+      if(!confirm("سيتم استبدال بياناتك الحالية بمحتوى الملف. متابعة؟")){ ev.target.value=""; return; }
+      const atts=incoming._attachments||{};
+      delete incoming._attachments;
+      for(const k in atts){ try{ await saveFile(k, dataURLToBlob(atts[k])); }catch(e){} }
       data=Object.assign(structuredClone(defaultData), incoming);
       save(); renderAll(); flash("تم الاستيراد بنجاح ✅");
     }catch(e){ alert("ملف غير صالح."); }
