@@ -1,6 +1,6 @@
 /* Service Worker — قلبي
    يخزّن ملفات التطبيق ليعمل بدون إنترنت ويُثبَّت كتطبيق. */
-const CACHE = "qalbi-v1";
+const CACHE = "qalbi-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,7 +8,11 @@ const ASSETS = [
   "./icon-192.png",
   "./icon-512.png",
   "./icon-maskable.png",
-  "./apple-touch-icon.png"
+  "./apple-touch-icon.png",
+  "./fonts/cairo.css",
+  "./fonts/cairo-arabic.woff2",
+  "./fonts/cairo-latin.woff2",
+  "./fonts/cairo-latin-ext.woff2"
 ];
 
 self.addEventListener("install", (e) => {

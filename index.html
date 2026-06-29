@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#b3204d">
 <title>قلبي — متابعة صحة القلب</title>
+<link rel="stylesheet" href="fonts/cairo.css">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -29,18 +30,24 @@
     --radius: 14px;
   }
   * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; max-width: 100%; }
   body {
     margin: 0;
-    font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", system-ui, sans-serif;
+    font-family: "Cairo", "Segoe UI", Tahoma, "Noto Naskh Arabic", system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
-    line-height: 1.6;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
   }
   header {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    position: relative;
+    background:
+      radial-gradient(1200px 200px at 80% -40%, rgba(255,255,255,.18), transparent 60%),
+      linear-gradient(135deg, #c62a57, var(--primary) 45%, var(--primary-dark));
     color: #fff;
-    padding: 20px 16px;
-    box-shadow: var(--shadow);
+    padding: 20px 16px 14px;
+    box-shadow: 0 6px 22px rgba(138,23,59,.28);
+    overflow: hidden;
   }
   .header-inner {
     max-width: 1000px;
@@ -50,12 +57,36 @@
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
+    position: relative;
+    z-index: 2;
   }
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand h1 { margin: 0; font-size: 1.4rem; }
-  .brand .sub { margin: 0; font-size: .8rem; opacity: .9; }
-  .heart { font-size: 1.9rem; animation: beat 1.4s ease-in-out infinite; }
-  @keyframes beat { 0%,100%{transform:scale(1)} 15%{transform:scale(1.18)} 30%{transform:scale(1)} 45%{transform:scale(1.12)} }
+  .brand { display: flex; align-items: center; gap: 13px; }
+  .brand h1 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: .5px; }
+  .brand .sub { margin: 2px 0 0; font-size: .8rem; opacity: .92; font-weight: 500; }
+  .heart {
+    font-size: 2rem;
+    animation: beat 1.4s ease-in-out infinite;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
+  }
+  @keyframes beat { 0%,100%{transform:scale(1)} 15%{transform:scale(1.2)} 30%{transform:scale(1)} 45%{transform:scale(1.13)} }
+
+  /* خط نبض القلب المتحرك (تخطيط ECG) */
+  .ekg {
+    position: relative; z-index: 1;
+    max-width: 1000px; margin: 12px auto 0; height: 34px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .ekg svg { width: 100%; height: 100%; display: block; }
+  .ekg-base { fill: none; stroke: rgba(255,255,255,.22); stroke-width: 1.5; }
+  .ekg-line {
+    fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,.85));
+    stroke-dasharray: 360;
+    animation: ekgflow 2.6s linear infinite;
+  }
+  @keyframes ekgflow { from { stroke-dashoffset: 720; } to { stroke-dashoffset: 0; } }
+  .ekg-dot { fill: #fff; filter: drop-shadow(0 0 6px #fff); }
   .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .header-actions button {
     background: rgba(255,255,255,.16);
@@ -89,10 +120,11 @@
     white-space: nowrap;
   }
   nav.tabs button.active {
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: #fff;
     border-color: var(--primary);
-    font-weight: 600;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(179,32,77,.3);
   }
 
   .card {
@@ -102,23 +134,40 @@
     padding: 18px;
     box-shadow: var(--shadow);
     margin-bottom: 16px;
+    transition: transform .18s ease, box-shadow .18s ease;
   }
-  .card h2 { margin: 0 0 4px; font-size: 1.15rem; }
+  .card:hover { box-shadow: 0 8px 24px rgba(20,25,40,.10); }
+  .card h2 { margin: 0 0 4px; font-size: 1.18rem; font-weight: 700; }
   .card .hint { color: var(--muted); font-size: .85rem; margin: 0 0 14px; }
 
   .grid { display: grid; gap: 14px; }
   @media (min-width: 720px){ .grid.cols-2 { grid-template-columns: 1fr 1fr; } .grid.cols-3 { grid-template-columns: repeat(3,1fr);} }
 
-  .stat { text-align: center; padding: 14px; border-radius: 12px; background: var(--primary-light); }
-  .stat .num { font-size: 1.6rem; font-weight: 700; color: var(--primary); }
-  .stat .lbl { font-size: .82rem; color: var(--muted); }
+  .stat {
+    text-align: center; padding: 16px 12px; border-radius: 14px;
+    background: linear-gradient(160deg, #fff, var(--primary-light));
+    border: 1px solid var(--border);
+  }
+  .stat .num {
+    font-size: 1.8rem; font-weight: 800; line-height: 1.1;
+    background: linear-gradient(135deg, var(--primary), #e0457a);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .stat .lbl { font-size: .82rem; color: var(--muted); margin-top: 2px; }
 
   .next-appt {
-    background: linear-gradient(135deg,#fff,#fff);
+    background: linear-gradient(120deg, #fff 70%, var(--primary-light));
     border-right: 5px solid var(--primary);
+    position: relative;
   }
-  .next-appt .when { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
-  .countdown { display:inline-block; background: var(--primary-light); color: var(--primary-dark); padding: 3px 10px; border-radius: 999px; font-size:.8rem; font-weight:600; }
+  .next-appt .when { font-size: 1.35rem; font-weight: 800; color: var(--primary); }
+  .countdown {
+    display:inline-flex; align-items:center; gap:5px;
+    background: var(--primary); color: #fff; padding: 4px 13px; border-radius: 999px;
+    font-size:.82rem; font-weight:700; box-shadow: 0 3px 10px rgba(179,32,77,.35);
+  }
+  .countdown::before { content:""; width:7px; height:7px; border-radius:50%; background:#fff; animation: blip 1.2s ease-in-out infinite; }
+  @keyframes blip { 0%,100%{opacity:.4; transform:scale(.8)} 50%{opacity:1; transform:scale(1.3)} }
 
   table { width: 100%; border-collapse: collapse; font-size: .9rem; }
   th, td { padding: 10px; text-align: right; border-bottom: 1px solid var(--border); }
@@ -127,14 +176,18 @@
   .empty { text-align: center; color: var(--muted); padding: 24px; font-size: .9rem; }
 
   .btn {
-    background: var(--primary); color:#fff; border:none;
-    padding: 9px 16px; border-radius: 10px; cursor: pointer; font-size:.9rem;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color:#fff; border:none; font-family: inherit; font-weight: 700;
+    padding: 9px 17px; border-radius: 10px; cursor: pointer; font-size:.9rem;
+    box-shadow: 0 3px 10px rgba(179,32,77,.28); transition: transform .12s ease, box-shadow .12s ease;
   }
-  .btn:hover { background: var(--primary-dark); }
-  .btn.ghost { background: transparent; color: var(--primary); border:1px solid var(--primary); }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(179,32,77,.36); }
+  .btn:active { transform: translateY(0); }
+  .btn.ghost { background: transparent; color: var(--primary); border:1px solid var(--primary); box-shadow:none; }
+  .btn.ghost:hover { background: var(--primary-light); transform:none; box-shadow:none; }
   .btn.sm { padding: 5px 10px; font-size: .8rem; }
-  .btn.icon { background: transparent; color: var(--muted); border:none; padding:4px 7px; font-size:1rem; }
-  .btn.icon:hover { color: var(--danger); }
+  .btn.icon { background: transparent; color: var(--muted); border:none; padding:4px 7px; font-size:1rem; box-shadow:none; }
+  .btn.icon:hover { color: var(--danger); transform:none; box-shadow:none; }
 
   form .row { margin-bottom: 12px; }
   form label { display:block; font-size:.85rem; color: var(--muted); margin-bottom: 5px; }
@@ -193,7 +246,8 @@
     overflow-x: auto; -webkit-overflow-scrolling: touch;
   }
   #apptsTable table, #labsTable table, #reportsTable table,
-  #leavesTable table, #medsTable table, #latestLabs table { min-width: 460px; }
+  #leavesTable table, #medsTable table, #latestLabs table { min-width: 360px; }
+  main, header, section, .card { max-width: 100%; }
 
   /* تحسينات للشاشات الصغيرة (الجوال) */
   @media (max-width: 560px) {
@@ -260,6 +314,17 @@
       <button onclick="document.getElementById('importFile').click()">⬆️ استيراد</button>
       <input type="file" id="importFile" accept="application/json" class="hide" onchange="importData(event)">
     </div>
+  </div>
+  <div class="ekg" aria-hidden="true">
+    <svg viewBox="0 0 800 60" preserveAspectRatio="none">
+      <path class="ekg-base" d="M0,30 L67.2,30 L76.8,27 L83.2,39 L91.2,7 L99.2,57 L107.2,19 L115.2,30 L160,30 L227.2,30 L236.8,27 L243.2,39 L251.2,7 L259.2,57 L267.2,19 L275.2,30 L320,30 L387.2,30 L396.8,27 L403.2,39 L411.2,7 L419.2,57 L427.2,19 L435.2,30 L480,30 L547.2,30 L556.8,27 L563.2,39 L571.2,7 L579.2,57 L587.2,19 L595.2,30 L640,30 L707.2,30 L716.8,27 L723.2,39 L731.2,7 L739.2,57 L747.2,19 L755.2,30 L800,30"/>
+      <path id="ekgPath" class="ekg-line" d="M0,30 L67.2,30 L76.8,27 L83.2,39 L91.2,7 L99.2,57 L107.2,19 L115.2,30 L160,30 L227.2,30 L236.8,27 L243.2,39 L251.2,7 L259.2,57 L267.2,19 L275.2,30 L320,30 L387.2,30 L396.8,27 L403.2,39 L411.2,7 L419.2,57 L427.2,19 L435.2,30 L480,30 L547.2,30 L556.8,27 L563.2,39 L571.2,7 L579.2,57 L587.2,19 L595.2,30 L640,30 L707.2,30 L716.8,27 L723.2,39 L731.2,7 L739.2,57 L747.2,19 L755.2,30 L800,30"/>
+      <circle class="ekg-dot" r="3.2">
+        <animateMotion dur="2.6s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+          <mpath href="#ekgPath"/>
+        </animateMotion>
+      </circle>
+    </svg>
   </div>
 </header>
 
