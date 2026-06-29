@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#b3204d">
+<title>قلبي — متابعة صحة القلب</title>
+<style>
+  :root {
+    --primary: #b3204d;
+    --primary-dark: #8a173b;
+    --primary-light: #fbe7ee;
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --text: #1f2430;
+    --muted: #6b7280;
+    --border: #e6e8ef;
+    --ok: #1a8f4c;
+    --warn: #b9770b;
+    --danger: #c2334d;
+    --shadow: 0 2px 10px rgba(20,25,40,.06);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    padding: 20px 16px;
+    box-shadow: var(--shadow);
+  }
+  .header-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand h1 { margin: 0; font-size: 1.4rem; }
+  .brand .sub { margin: 0; font-size: .8rem; opacity: .9; }
+  .heart { font-size: 1.9rem; animation: beat 1.4s ease-in-out infinite; }
+  @keyframes beat { 0%,100%{transform:scale(1)} 15%{transform:scale(1.18)} 30%{transform:scale(1)} 45%{transform:scale(1.12)} }
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .header-actions button {
+    background: rgba(255,255,255,.16);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.3);
+    padding: 7px 12px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: .85rem;
+  }
+  .header-actions button:hover { background: rgba(255,255,255,.28); }
+
+  main { max-width: 1000px; margin: 0 auto; padding: 16px; }
+
+  nav.tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 0 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  nav.tabs button {
+    flex: 0 0 auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 9px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: .9rem;
+    white-space: nowrap;
+  }
+  nav.tabs button.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    font-weight: 600;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+  }
+  .card h2 { margin: 0 0 4px; font-size: 1.15rem; }
+  .card .hint { color: var(--muted); font-size: .85rem; margin: 0 0 14px; }
+
+  .grid { display: grid; gap: 14px; }
+  @media (min-width: 720px){ .grid.cols-2 { grid-template-columns: 1fr 1fr; } .grid.cols-3 { grid-template-columns: repeat(3,1fr);} }
+
+  .stat { text-align: center; padding: 14px; border-radius: 12px; background: var(--primary-light); }
+  .stat .num { font-size: 1.6rem; font-weight: 700; color: var(--primary); }
+  .stat .lbl { font-size: .82rem; color: var(--muted); }
+
+  .next-appt {
+    background: linear-gradient(135deg,#fff,#fff);
+    border-right: 5px solid var(--primary);
+  }
+  .next-appt .when { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+  .countdown { display:inline-block; background: var(--primary-light); color: var(--primary-dark); padding: 3px 10px; border-radius: 999px; font-size:.8rem; font-weight:600; }
+
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { padding: 10px; text-align: right; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: .82rem; }
+  tr:last-child td { border-bottom: none; }
+  .empty { text-align: center; color: var(--muted); padding: 24px; font-size: .9rem; }
+
+  .btn {
+    background: var(--primary); color:#fff; border:none;
+    padding: 9px 16px; border-radius: 10px; cursor: pointer; font-size:.9rem;
+  }
+  .btn:hover { background: var(--primary-dark); }
+  .btn.ghost { background: transparent; color: var(--primary); border:1px solid var(--primary); }
+  .btn.sm { padding: 5px 10px; font-size: .8rem; }
+  .btn.icon { background: transparent; color: var(--muted); border:none; padding:4px 7px; font-size:1rem; }
+  .btn.icon:hover { color: var(--danger); }
+
+  form .row { margin-bottom: 12px; }
+  form label { display:block; font-size:.85rem; color: var(--muted); margin-bottom: 5px; }
+  form input, form select, form textarea {
+    width: 100%; padding: 9px 11px; border:1px solid var(--border); border-radius: 9px;
+    font-family: inherit; font-size:.9rem; background:#fff;
+  }
+  form textarea { resize: vertical; min-height: 60px; }
+  form .form-grid { display: grid; gap: 12px; }
+  @media (min-width:600px){ form .form-grid.two { grid-template-columns:1fr 1fr; } form .form-grid.three { grid-template-columns:1fr 1fr 1fr; } }
+  .form-actions { display:flex; gap:8px; margin-top: 4px; }
+
+  .badge { display:inline-block; padding: 2px 9px; border-radius: 999px; font-size:.76rem; font-weight:600; }
+  .badge.ok { background:#e3f5ea; color:var(--ok); }
+  .badge.warn { background:#fdf1dc; color:var(--warn); }
+  .badge.danger { background:#fbe3e7; color:var(--danger); }
+  .badge.muted { background:#eef0f4; color:var(--muted); }
+
+  .file-link { color: var(--primary); text-decoration: none; font-size:.85rem; }
+  .file-link:hover { text-decoration: underline; }
+
+  /* simple svg chart */
+  .chart-wrap { overflow-x:auto; }
+  svg.chart { display:block; }
+
+  .pill-group { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .pill-group button { padding:6px 12px; border:1px solid var(--border); background:#fff; border-radius:999px; cursor:pointer; font-size:.82rem; color:var(--muted); }
+  .pill-group button.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+  dialog {
+    border:none; border-radius:16px; padding:0; max-width:520px; width:92%;
+    box-shadow:0 20px 50px rgba(0,0,0,.25);
+  }
+  dialog::backdrop { background: rgba(15,18,30,.45); }
+  .dialog-head { padding:16px 18px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .dialog-head h3 { margin:0; font-size:1.05rem; }
+  .dialog-body { padding:18px; }
+  .close-x { background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--muted); }
+
+  footer { text-align:center; color:var(--muted); font-size:.8rem; padding: 24px 16px; }
+  .med-note { background: var(--primary-light); border-radius:10px; padding:10px 12px; font-size:.85rem; }
+  .hide { display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <span class="heart">❤️</span>
+      <div>
+        <h1>قلبي</h1>
+        <p class="sub">سجلّي الشخصي لمتابعة صحة القلب</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button onclick="exportData()">⬇️ نسخة احتياطية</button>
+      <button onclick="document.getElementById('importFile').click()">⬆️ استيراد</button>
+      <input type="file" id="importFile" accept="application/json" class="hide" onchange="importData(event)">
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav class="tabs" id="tabs">
+    <button data-tab="dash" class="active">🏠 الرئيسية</button>
+    <button data-tab="appts">📅 المواعيد</button>
+    <button data-tab="labs">📊 التحاليل</button>
+    <button data-tab="reports">🗂️ التقارير</button>
+    <button data-tab="leaves">📝 الإجازات</button>
+    <button data-tab="summary">📋 ملخص حالتي</button>
+  </nav>
+
+  <!-- DASHBOARD -->
+  <section id="tab-dash">
+    <div class="card next-appt" id="nextApptCard"></div>
+    <div class="grid cols-3" id="dashStats"></div>
+    <div class="card">
+      <h2>آخر التحاليل المسجّلة</h2>
+      <p class="hint">أحدث القيم التي أدخلتها لكل نوع تحليل.</p>
+      <div id="latestLabs"></div>
+    </div>
+  </section>
+
+  <!-- APPOINTMENTS -->
+  <section id="tab-appts" class="hide">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div><h2>المواعيد</h2><p class="hint" style="margin:0;">مواعيدك القادمة والسابقة مع الدكتور.</p></div>
+        <button class="btn" onclick="openApptForm()">+ موعد جديد</button>
+      </div>
+      <div id="apptsTable" style="margin-top:14px;"></div>
+    </div>
+  </section>
+
+  <!-- LABS -->
+  <section id="tab-labs" class="hide">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div><h2>التحاليل والقيم</h2><p class="hint" style="margin:0;">تتبّع قيمك الحيوية عبر الوقت لرؤية التطور.</p></div>
+        <button class="btn" onclick="openLabForm()">+ قياس جديد</button>
+      </div>
+      <div class="pill-group" id="labFilter" style="margin-top:14px;"></div>
+      <div class="chart-wrap"><div id="labChart"></div></div>
+      <div id="labsTable" style="margin-top:6px;"></div>
+    </div>
+  </section>
+
+  <!-- REPORTS -->
+  <section id="tab-reports" class="hide">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div><h2>مستودع التقارير والتحاليل</h2><p class="hint" style="margin:0;">سجّل كل تقرير، وضع ملفه في مجلد <code>reports/</code>.</p></div>
+        <button class="btn" onclick="openReportForm()">+ تقرير جديد</button>
+      </div>
+      <div class="med-note" style="margin-top:12px;">💡 ضع ملف التقرير (PDF أو صورة) داخل مجلد <b>reports/</b> بجانب التطبيق، ثم اكتب اسم الملف هنا ليصبح رابطاً قابلاً للفتح.</div>
+      <div id="reportsTable" style="margin-top:14px;"></div>
+    </div>
+  </section>
+
+  <!-- LEAVES -->
+  <section id="tab-leaves" class="hide">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div><h2>الإجازات المرضية</h2><p class="hint" style="margin:0;">توثيق إجازاتك ومرفقاتها.</p></div>
+        <button class="btn" onclick="openLeaveForm()">+ إجازة جديدة</button>
+      </div>
+      <div id="leavesTable" style="margin-top:14px;"></div>
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section id="tab-summary" class="hide">
+    <div class="card">
+      <h2>معلوماتي الأساسية</h2>
+      <p class="hint">معلومات عامة يراها الطبيب بسرعة.</p>
+      <form id="profileForm" onsubmit="saveProfile(event)">
+        <div class="form-grid two">
+          <div class="row"><label>الاسم</label><input name="name" id="pf-name"></div>
+          <div class="row"><label>تاريخ الميلاد</label><input type="date" name="dob" id="pf-dob"></div>
+          <div class="row"><label>فصيلة الدم</label><input name="blood" id="pf-blood" placeholder="مثال: O+"></div>
+          <div class="row"><label>التشخيص الأساسي</label><input name="diagnosis" id="pf-diagnosis" placeholder="مثال: ارتفاع ضغط الدم"></div>
+        </div>
+        <div class="row"><label>الحساسية / تنبيهات مهمة</label><textarea name="allergies" id="pf-allergies"></textarea></div>
+        <div class="form-actions"><button class="btn" type="submit">حفظ</button></div>
+      </form>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div><h2>الأدوية الحالية</h2><p class="hint" style="margin:0;">قائمة أدويتك وجرعاتها.</p></div>
+        <button class="btn" onclick="openMedForm()">+ دواء</button>
+      </div>
+      <div id="medsTable" style="margin-top:14px;"></div>
+    </div>
+    <div class="card">
+      <h2>ملاحظات الطبيب</h2>
+      <p class="hint">ملاحظات عامة وتوصيات.</p>
+      <form onsubmit="saveProfile(event)">
+        <div class="row"><textarea id="pf-notes" rows="5"></textarea></div>
+        <div class="form-actions"><button class="btn" type="submit">حفظ الملاحظات</button></div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  ❤️ <b>قلبي</b> — بياناتك محفوظة محلياً على جهازك فقط. لا ترسل لأي خادم.
+  <br>خذ نسخة احتياطية دورياً عبر زر «نسخة احتياطية».
+</footer>
+
+<!-- Generic dialog -->
+<dialog id="dlg">
+  <div class="dialog-head">
+    <h3 id="dlgTitle"></h3>
+    <button class="close-x" onclick="document.getElementById('dlg').close()">×</button>
+  </div>
+  <div class="dialog-body" id="dlgBody"></div>
+</dialog>
+
+<script>
+/* =========================================================
+   قلبي — تطبيق متابعة صحة القلب
+   كل البيانات تُحفظ في localStorage على جهاز المستخدم.
+   ========================================================= */
+
+const STORE_KEY = "qalbi_data_v1";
+
+const defaultData = {
+  profile: { name:"", dob:"", blood:"", diagnosis:"", allergies:"", notes:"" },
+  appointments: [], // {id, date, time, clinic, doctor, reason, done}
+  labs: [],         // {id, date, type, value, unit, note}
+  reports: [],      // {id, date, title, type, file, note}
+  leaves: [],       // {id, from, to, days, issuer, file, note}
+  meds: []          // {id, name, dose, freq, note}
+};
+
+const LAB_TYPES = [
+  { key:"bp_sys", label:"ضغط الدم (الانقباضي)", unit:"mmHg" },
+  { key:"bp_dia", label:"ضغط الدم (الانبساطي)", unit:"mmHg" },
+  { key:"pulse",  label:"نبض القلب", unit:"نبضة/د" },
+  { key:"chol",   label:"الكوليسترول", unit:"mg/dL" },
+  { key:"ldl",    label:"الكوليسترول الضار LDL", unit:"mg/dL" },
+  { key:"hdl",    label:"الكوليسترول النافع HDL", unit:"mg/dL" },
+  { key:"sugar",  label:"السكر", unit:"mg/dL" },
+  { key:"weight", label:"الوزن", unit:"كجم" },
+  { key:"other",  label:"أخرى", unit:"" }
+];
+
+/* بيانات أولية مستخرجة من التقرير الطبي (مدينة الأمير سلطان الطبية العسكرية).
+   تظهر تلقائياً عند أول تشغيل، ويمكنك تعديلها أو حذفها بحرية. */
+const SEED = {
+  profile: {
+    name: "محمد إبراهيم محمد الربيش",
+    dob: "1997-06-16",
+    blood: "",
+    diagnosis: "رباعية فالو (Tetralogy of Fallot)",
+    allergies: "لا توجد حساسية معروفة",
+    notes: "السجل الجراحي والتاريخ المرضي:\n• إصلاح رباعية فالو في مركز الأمير سلطان للقلب عام 1999.\n• استبدال الصمام الرئوي في القصيم عام 2013.\n• تاريخ تسرّع بطيني (Ventricular Tachycardia).\n• ضعف في وظيفة البطين الأيمن.\n\nتوصيات آخر زيارة (6 أغسطس 2025 — د. خالد سليمان النجاشي):\n• الاستمرار على نفس الأدوية.\n• موعد بعد 6 أشهر في عيادة ما قبل الدخول (Preadmission).\n• مراجعة العيادة الخارجية (OPD) بعد 9 أشهر.\n• يحتاج متابعة مع الجهاز الهضمي (GI) والأنف والأذن والحنجرة (ENT)."
+  },
+  appointments: [
+    { id:"seed-a1", date:"2026-02-06", time:"", clinic:"عيادة ما قبل الدخول (Preadmission) — PSMMC", doctor:"د. خالد سليمان النجاشي", reason:"متابعة (موعد تقديري — بعد 6 أشهر من تقرير 6/8/2025)", done:false },
+    { id:"seed-a2", date:"2026-05-06", time:"", clinic:"عيادة القلب الخارجية (OPD) — PSMMC", doctor:"د. خالد سليمان النجاشي", reason:"مراجعة دورية (موعد تقديري — بعد 9 أشهر)", done:false }
+  ],
+  labs: [
+    { id:"seed-l1", date:"2025-08-06", type:"bp_sys", value:"127", unit:"mmHg", note:"زيارة العيادة" },
+    { id:"seed-l2", date:"2025-08-06", type:"bp_dia", value:"75", unit:"mmHg", note:"زيارة العيادة" },
+    { id:"seed-l3", date:"2025-08-06", type:"pulse", value:"73", unit:"نبضة/د", note:"" },
+    { id:"seed-l4", date:"2025-08-06", type:"weight", value:"75", unit:"كجم", note:"" }
+  ],
+  reports: [
+    { id:"seed-r1", date:"2025-08-06", title:"تقرير طبي شامل — عيادة القلب (PSMMC)", type:"تقرير طبيب",
+      file:"medical-report-2025-08-06.pdf",
+      note:"يشمل: ECG (إيقاع جيبي 60/د)، إيكو (كسر قذف 50%، تضخم شديد بالبطين الأيمن، ارتجاع شديد بالصمام ثلاثي الشرفات)، هولتر، واختبار جهد (Bruce 12 دقيقة). الطبيب: د. خالد سليمان النجاشي." }
+  ],
+  leaves: [],
+  meds: [
+    { id:"seed-m1", name:"إمباغليفلوزين (Empagliflozin)", dose:"10 ملغ", freq:"كل صباح", note:"قرص فموي" },
+    { id:"seed-m2", name:"إنتريستو (Entresto — Valsartan+Sacubitril)", dose:"100 ملغ (200 ملغ)", freq:"مرتين يومياً (BID)", note:"" },
+    { id:"seed-m3", name:"إبليرينون (Eplerenone)", dose:"25 ملغ", freq:"مرة يومياً", note:"" },
+    { id:"seed-m4", name:"ميتوبرولول (Metoprolol)", dose:"50 ملغ", freq:"مرتين يومياً (BD)", note:"" }
+  ]
+};
+
+let data = load();
+
+function load(){
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw){ const seeded = Object.assign(structuredClone(defaultData), structuredClone(SEED)); return seeded; }
+    return Object.assign(structuredClone(defaultData), JSON.parse(raw));
+  } catch(e){ return structuredClone(defaultData); }
+}
+function save(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(data));
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+/* ---------- date helpers ---------- */
+function fmtDate(d){
+  if(!d) return "—";
+  try { return new Date(d+"T00:00:00").toLocaleDateString("ar", {year:"numeric",month:"long",day:"numeric"}); }
+  catch(e){ return d; }
+}
+function daysUntil(d){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(d+"T00:00:00");
+  return Math.round((target - today) / 86400000);
+}
+function labLabel(key){ const t = LAB_TYPES.find(x=>x.key===key); return t?t.label:key; }
+function labUnit(key){ const t = LAB_TYPES.find(x=>x.key===key); return t?t.unit:""; }
+
+/* =========================================================
+   Navigation
+   ========================================================= */
+document.getElementById("tabs").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-tab]");
+  if(!btn) return;
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  document.querySelectorAll("main section").forEach(s=>s.classList.add("hide"));
+  document.getElementById("tab-"+btn.dataset.tab).classList.remove("hide");
+  renderAll();
+});
+
+/* =========================================================
+   Dialog helper
+   ========================================================= */
+function openDialog(title, bodyHtml){
+  document.getElementById("dlgTitle").textContent = title;
+  document.getElementById("dlgBody").innerHTML = bodyHtml;
+  document.getElementById("dlg").showModal();
+}
+function closeDialog(){ document.getElementById("dlg").close(); }
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function renderDashboard(){
+  // next appointment
+  const upcoming = data.appointments
+    .filter(a=>!a.done && daysUntil(a.date) >= 0)
+    .sort((a,b)=> a.date.localeCompare(b.date));
+  const card = document.getElementById("nextApptCard");
+  if(upcoming.length){
+    const n = upcoming[0];
+    const d = daysUntil(n.date);
+    const cd = d===0 ? "اليوم!" : d===1 ? "غداً" : `بعد ${d} يوم`;
+    card.innerHTML = `
+      <p class="hint" style="margin:0 0 6px;">⏰ موعدك القادم</p>
+      <div class="when">${fmtDate(n.date)} ${n.time?("— "+n.time):""}</div>
+      <div style="margin:6px 0;">
+        <span class="countdown">${cd}</span>
+      </div>
+      <div style="color:var(--muted);font-size:.9rem;">
+        ${n.clinic?("🏥 "+esc(n.clinic)+" "):""}
+        ${n.doctor?("· 👨‍⚕️ "+esc(n.doctor)+" "):""}
+        ${n.reason?("· "+esc(n.reason)):""}
+      </div>`;
+  } else {
+    card.innerHTML = `<p class="hint" style="margin:0 0 6px;">⏰ موعدك القادم</p>
+      <div class="empty">لا توجد مواعيد قادمة. <button class="btn sm" onclick="openApptForm()">+ أضف موعد</button></div>`;
+  }
+
+  // stats
+  const upcomingCount = data.appointments.filter(a=>!a.done && daysUntil(a.date)>=0).length;
+  document.getElementById("dashStats").innerHTML = `
+    <div class="stat"><div class="num">${upcomingCount}</div><div class="lbl">مواعيد قادمة</div></div>
+    <div class="stat"><div class="num">${data.reports.length}</div><div class="lbl">تقارير محفوظة</div></div>
+    <div class="stat"><div class="num">${data.labs.length}</div><div class="lbl">قياسات مسجّلة</div></div>`;
+
+  // latest labs per type
+  const latest = {};
+  data.labs.forEach(l=>{
+    if(!latest[l.type] || l.date > latest[l.type].date) latest[l.type] = l;
+  });
+  const keys = Object.keys(latest);
+  const box = document.getElementById("latestLabs");
+  if(keys.length){
+    box.innerHTML = `<table><thead><tr><th>التحليل</th><th>القيمة</th><th>التاريخ</th></tr></thead><tbody>`+
+      keys.map(k=>{const l=latest[k];return `<tr><td>${esc(labLabel(k))}</td><td><b>${esc(l.value)}</b> ${esc(l.unit||labUnit(k))}</td><td>${fmtDate(l.date)}</td></tr>`;}).join("")+
+      `</tbody></table>`;
+  } else {
+    box.innerHTML = `<div class="empty">لا توجد قياسات بعد. <button class="btn sm" onclick="openLabForm()">+ أضف قياس</button></div>`;
+  }
+}
+
+/* =========================================================
+   APPOINTMENTS
+   ========================================================= */
+function renderAppts(){
+  const box = document.getElementById("apptsTable");
+  if(!data.appointments.length){ box.innerHTML = `<div class="empty">لا توجد مواعيد مسجّلة بعد.</div>`; return; }
+  const sorted = [...data.appointments].sort((a,b)=> b.date.localeCompare(a.date));
+  box.innerHTML = `<table><thead><tr><th>التاريخ</th><th>الوقت</th><th>العيادة / الطبيب</th><th>السبب</th><th>الحالة</th><th></th></tr></thead><tbody>`+
+    sorted.map(a=>{
+      const d = daysUntil(a.date);
+      let status;
+      if(a.done) status = `<span class="badge muted">تمّ</span>`;
+      else if(d<0) status = `<span class="badge warn">فات</span>`;
+      else if(d===0) status = `<span class="badge danger">اليوم</span>`;
+      else status = `<span class="badge ok">بعد ${d} يوم</span>`;
+      return `<tr>
+        <td>${fmtDate(a.date)}</td>
+        <td>${esc(a.time||"—")}</td>
+        <td>${esc(a.clinic||"")}${a.doctor?("<br><small style='color:var(--muted)'>"+esc(a.doctor)+"</small>"):""}</td>
+        <td>${esc(a.reason||"—")}</td>
+        <td>${status}</td>
+        <td style="white-space:nowrap;">
+          ${a.done?"":`<button class="btn icon" title="تمّ الموعد" onclick="markApptDone('${a.id}')">✅</button>`}
+          <button class="btn icon" title="تعديل" onclick="openApptForm('${a.id}')">✏️</button>
+          <button class="btn icon" title="حذف" onclick="del('appointments','${a.id}')">🗑️</button>
+        </td></tr>`;
+    }).join("")+`</tbody></table>`;
+}
+function openApptForm(id){
+  const a = id ? data.appointments.find(x=>x.id===id) : {};
+  openDialog(id?"تعديل موعد":"موعد جديد", `
+    <form onsubmit="saveAppt(event,'${id||""}')">
+      <div class="form-grid two">
+        <div class="row"><label>التاريخ *</label><input type="date" id="ap-date" required value="${a.date||""}"></div>
+        <div class="row"><label>الوقت</label><input type="time" id="ap-time" value="${a.time||""}"></div>
+      </div>
+      <div class="form-grid two">
+        <div class="row"><label>العيادة / المستشفى</label><input id="ap-clinic" value="${attr(a.clinic)}"></div>
+        <div class="row"><label>الطبيب</label><input id="ap-doctor" value="${attr(a.doctor)}"></div>
+      </div>
+      <div class="row"><label>سبب الزيارة</label><input id="ap-reason" value="${attr(a.reason)}" placeholder="مراجعة دورية، تخطيط قلب..."></div>
+      <div class="form-actions">
+        <button class="btn" type="submit">حفظ</button>
+        <button class="btn ghost" type="button" onclick="closeDialog()">إلغاء</button>
+      </div>
+    </form>`);
+}
+function saveAppt(e,id){
+  e.preventDefault();
+  const obj = {
+    id: id||uid(),
+    date: val("ap-date"), time: val("ap-time"),
+    clinic: val("ap-clinic"), doctor: val("ap-doctor"),
+    reason: val("ap-reason"),
+    done: id ? data.appointments.find(x=>x.id===id).done : false
+  };
+  upsert("appointments", obj);
+  closeDialog(); renderAll();
+}
+function markApptDone(id){
+  const a = data.appointments.find(x=>x.id===id); if(a){ a.done=true; save(); renderAll(); }
+}
+
+/* =========================================================
+   LABS
+   ========================================================= */
+let activeLabFilter = "all";
+function renderLabs(){
+  // filter pills
+  const types = [...new Set(data.labs.map(l=>l.type))];
+  const pills = document.getElementById("labFilter");
+  pills.innerHTML = [`<button class="${activeLabFilter==='all'?'active':''}" onclick="setLabFilter('all')">الكل</button>`]
+    .concat(types.map(t=>`<button class="${activeLabFilter===t?'active':''}" onclick="setLabFilter('${t}')">${esc(labLabel(t))}</button>`)).join("");
+
+  // chart (only when a specific type is chosen)
+  const chartBox = document.getElementById("labChart");
+  if(activeLabFilter!=="all"){
+    const series = data.labs.filter(l=>l.type===activeLabFilter).sort((a,b)=>a.date.localeCompare(b.date));
+    chartBox.innerHTML = drawChart(series);
+  } else { chartBox.innerHTML = ""; }
+
+  // table
+  const box = document.getElementById("labsTable");
+  const rows = data.labs
+    .filter(l=> activeLabFilter==="all" || l.type===activeLabFilter)
+    .sort((a,b)=> b.date.localeCompare(a.date));
+  if(!rows.length){ box.innerHTML = `<div class="empty">لا توجد قياسات.</div>`; return; }
+  box.innerHTML = `<table><thead><tr><th>التاريخ</th><th>التحليل</th><th>القيمة</th><th>ملاحظة</th><th></th></tr></thead><tbody>`+
+    rows.map(l=>`<tr>
+      <td>${fmtDate(l.date)}</td>
+      <td>${esc(labLabel(l.type))}</td>
+      <td><b>${esc(l.value)}</b> ${esc(l.unit||labUnit(l.type))}</td>
+      <td>${esc(l.note||"—")}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn icon" onclick="openLabForm('${l.id}')">✏️</button>
+        <button class="btn icon" onclick="del('labs','${l.id}')">🗑️</button>
+      </td></tr>`).join("")+`</tbody></table>`;
+}
+function setLabFilter(f){ activeLabFilter=f; renderLabs(); }
+
+function drawChart(series){
+  if(series.length<2) return `<div class="empty">أضف قياسين على الأقل لعرض الرسم البياني.</div>`;
+  const W=Math.max(520, series.length*70), H=200, P=36;
+  const vals = series.map(s=>parseFloat(s.value)).filter(v=>!isNaN(v));
+  if(vals.length<2) return "";
+  const min=Math.min(...vals), max=Math.max(...vals), range=(max-min)||1;
+  const x=i=> P + i*((W-2*P)/(series.length-1));
+  const y=v=> H-P - ((v-min)/range)*(H-2*P);
+  let pts = series.map((s,i)=>`${x(i)},${y(parseFloat(s.value))}`).join(" ");
+  let dots = series.map((s,i)=>`<circle cx="${x(i)}" cy="${y(parseFloat(s.value))}" r="4" fill="#b3204d"><title>${esc(s.value)} — ${fmtDate(s.date)}</title></circle>`).join("");
+  let labels = series.map((s,i)=>`<text x="${x(i)}" y="${H-12}" font-size="10" fill="#6b7280" text-anchor="middle">${s.date.slice(5)}</text>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+    <line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="#e6e8ef"/>
+    <line x1="${P}" y1="${P}" x2="${P}" y2="${H-P}" stroke="#e6e8ef"/>
+    <text x="${P-6}" y="${y(max)+4}" font-size="10" fill="#6b7280" text-anchor="end">${max}</text>
+    <text x="${P-6}" y="${y(min)+4}" font-size="10" fill="#6b7280" text-anchor="end">${min}</text>
+    <polyline points="${pts}" fill="none" stroke="#b3204d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}${labels}
+  </svg>`;
+}
+
+function openLabForm(id){
+  const l = id ? data.labs.find(x=>x.id===id) : {};
+  const opts = LAB_TYPES.map(t=>`<option value="${t.key}" ${l.type===t.key?"selected":""}>${t.label}</option>`).join("");
+  openDialog(id?"تعديل قياس":"قياس جديد",`
+    <form onsubmit="saveLab(event,'${id||""}')">
+      <div class="form-grid two">
+        <div class="row"><label>التاريخ *</label><input type="date" id="lb-date" required value="${l.date||today()}"></div>
+        <div class="row"><label>نوع التحليل *</label><select id="lb-type" required onchange="syncUnit()">${opts}</select></div>
+      </div>
+      <div class="form-grid two">
+        <div class="row"><label>القيمة *</label><input id="lb-value" required value="${attr(l.value)}" placeholder="مثال: 120"></div>
+        <div class="row"><label>الوحدة</label><input id="lb-unit" value="${attr(l.unit)}" placeholder="mmHg"></div>
+      </div>
+      <div class="row"><label>ملاحظة</label><input id="lb-note" value="${attr(l.note)}"></div>
+      <div class="form-actions">
+        <button class="btn" type="submit">حفظ</button>
+        <button class="btn ghost" type="button" onclick="closeDialog()">إلغاء</button>
+      </div>
+    </form>`);
+  syncUnit();
+}
+function syncUnit(){
+  const sel = document.getElementById("lb-type"); if(!sel) return;
+  const unitInput = document.getElementById("lb-unit");
+  if(unitInput && !unitInput.value){ unitInput.value = labUnit(sel.value); }
+}
+function saveLab(e,id){
+  e.preventDefault();
+  upsert("labs",{ id:id||uid(), date:val("lb-date"), type:val("lb-type"),
+    value:val("lb-value"), unit:val("lb-unit"), note:val("lb-note") });
+  closeDialog(); renderAll();
+}
+
+/* =========================================================
+   REPORTS
+   ========================================================= */
+function renderReports(){
+  const box = document.getElementById("reportsTable");
+  if(!data.reports.length){ box.innerHTML = `<div class="empty">لا توجد تقارير مسجّلة.</div>`; return; }
+  const sorted=[...data.reports].sort((a,b)=>b.date.localeCompare(a.date));
+  box.innerHTML = `<table><thead><tr><th>التاريخ</th><th>العنوان</th><th>النوع</th><th>الملف</th><th>ملاحظة</th><th></th></tr></thead><tbody>`+
+    sorted.map(r=>`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td><b>${esc(r.title)}</b></td>
+      <td><span class="badge muted">${esc(r.type||"—")}</span></td>
+      <td>${r.file?`<a class="file-link" href="reports/${encodeURIComponent(r.file)}" target="_blank">📎 فتح</a>`:"—"}</td>
+      <td>${esc(r.note||"—")}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn icon" onclick="openReportForm('${r.id}')">✏️</button>
+        <button class="btn icon" onclick="del('reports','${r.id}')">🗑️</button>
+      </td></tr>`).join("")+`</tbody></table>`;
+}
+function openReportForm(id){
+  const r = id?data.reports.find(x=>x.id===id):{};
+  const typeOpts = ["تخطيط قلب (ECG)","إيكو (Echo)","تحليل دم","أشعة","تقرير طبيب","اختبار جهد","أخرى"]
+    .map(t=>`<option ${r.type===t?"selected":""}>${t}</option>`).join("");
+  openDialog(id?"تعديل تقرير":"تقرير جديد",`
+    <form onsubmit="saveReport(event,'${id||""}')">
+      <div class="form-grid two">
+        <div class="row"><label>التاريخ *</label><input type="date" id="rp-date" required value="${r.date||today()}"></div>
+        <div class="row"><label>النوع</label><select id="rp-type">${typeOpts}</select></div>
+      </div>
+      <div class="row"><label>عنوان التقرير *</label><input id="rp-title" required value="${attr(r.title)}" placeholder="مثال: تخطيط قلب — مستشفى الملك فهد"></div>
+      <div class="row"><label>اسم الملف (داخل مجلد reports/)</label><input id="rp-file" value="${attr(r.file)}" placeholder="ecg-2026-06.pdf"></div>
+      <div class="row"><label>ملاحظة</label><textarea id="rp-note">${esc(r.note||"")}</textarea></div>
+      <div class="form-actions">
+        <button class="btn" type="submit">حفظ</button>
+        <button class="btn ghost" type="button" onclick="closeDialog()">إلغاء</button>
+      </div>
+    </form>`);
+}
+function saveReport(e,id){
+  e.preventDefault();
+  upsert("reports",{ id:id||uid(), date:val("rp-date"), title:val("rp-title"),
+    type:val("rp-type"), file:val("rp-file"), note:val("rp-note") });
+  closeDialog(); renderAll();
+}
+
+/* =========================================================
+   LEAVES
+   ========================================================= */
+function renderLeaves(){
+  const box=document.getElementById("leavesTable");
+  if(!data.leaves.length){ box.innerHTML=`<div class="empty">لا توجد إجازات مسجّلة.</div>`; return; }
+  const sorted=[...data.leaves].sort((a,b)=>b.from.localeCompare(a.from));
+  box.innerHTML=`<table><thead><tr><th>من</th><th>إلى</th><th>المدة</th><th>الجهة</th><th>الملف</th><th></th></tr></thead><tbody>`+
+    sorted.map(l=>`<tr>
+      <td>${fmtDate(l.from)}</td>
+      <td>${fmtDate(l.to)}</td>
+      <td>${esc(l.days||calcDays(l.from,l.to))} يوم</td>
+      <td>${esc(l.issuer||"—")}</td>
+      <td>${l.file?`<a class="file-link" href="reports/${encodeURIComponent(l.file)}" target="_blank">📎 فتح</a>`:"—"}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn icon" onclick="openLeaveForm('${l.id}')">✏️</button>
+        <button class="btn icon" onclick="del('leaves','${l.id}')">🗑️</button>
+      </td></tr>`).join("")+`</tbody></table>`;
+}
+function openLeaveForm(id){
+  const l=id?data.leaves.find(x=>x.id===id):{};
+  openDialog(id?"تعديل إجازة":"إجازة مرضية جديدة",`
+    <form onsubmit="saveLeave(event,'${id||""}')">
+      <div class="form-grid two">
+        <div class="row"><label>من تاريخ *</label><input type="date" id="lv-from" required value="${l.from||today()}"></div>
+        <div class="row"><label>إلى تاريخ *</label><input type="date" id="lv-to" required value="${l.to||today()}"></div>
+      </div>
+      <div class="row"><label>الجهة المُصدِرة</label><input id="lv-issuer" value="${attr(l.issuer)}" placeholder="اسم المستشفى / الطبيب"></div>
+      <div class="row"><label>اسم الملف (داخل reports/)</label><input id="lv-file" value="${attr(l.file)}" placeholder="leave-2026-06.pdf"></div>
+      <div class="row"><label>ملاحظة</label><input id="lv-note" value="${attr(l.note)}"></div>
+      <div class="form-actions">
+        <button class="btn" type="submit">حفظ</button>
+        <button class="btn ghost" type="button" onclick="closeDialog()">إلغاء</button>
+      </div>
+    </form>`);
+}
+function saveLeave(e,id){
+  e.preventDefault();
+  const from=val("lv-from"), to=val("lv-to");
+  upsert("leaves",{ id:id||uid(), from, to, days:calcDays(from,to),
+    issuer:val("lv-issuer"), file:val("lv-file"), note:val("lv-note") });
+  closeDialog(); renderAll();
+}
+function calcDays(from,to){
+  if(!from||!to) return 0;
+  return Math.max(1, Math.round((new Date(to)-new Date(from))/86400000)+1);
+}
+
+/* =========================================================
+   SUMMARY (profile + meds)
+   ========================================================= */
+function renderSummary(){
+  const p=data.profile;
+  setVal("pf-name",p.name); setVal("pf-dob",p.dob); setVal("pf-blood",p.blood);
+  setVal("pf-diagnosis",p.diagnosis); setVal("pf-allergies",p.allergies); setVal("pf-notes",p.notes);
+  const box=document.getElementById("medsTable");
+  if(!data.meds.length){ box.innerHTML=`<div class="empty">لا توجد أدوية مسجّلة.</div>`; return; }
+  box.innerHTML=`<table><thead><tr><th>الدواء</th><th>الجرعة</th><th>عدد المرات</th><th>ملاحظة</th><th></th></tr></thead><tbody>`+
+    data.meds.map(m=>`<tr>
+      <td><b>${esc(m.name)}</b></td><td>${esc(m.dose||"—")}</td><td>${esc(m.freq||"—")}</td><td>${esc(m.note||"—")}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn icon" onclick="openMedForm('${m.id}')">✏️</button>
+        <button class="btn icon" onclick="del('meds','${m.id}')">🗑️</button>
+      </td></tr>`).join("")+`</tbody></table>`;
+}
+function saveProfile(e){
+  e.preventDefault();
+  data.profile = {
+    name:val("pf-name"), dob:val("pf-dob"), blood:val("pf-blood"),
+    diagnosis:val("pf-diagnosis"), allergies:val("pf-allergies"), notes:val("pf-notes")
+  };
+  save(); flash("تم حفظ المعلومات ✅");
+}
+function openMedForm(id){
+  const m=id?data.meds.find(x=>x.id===id):{};
+  openDialog(id?"تعديل دواء":"دواء جديد",`
+    <form onsubmit="saveMed(event,'${id||""}')">
+      <div class="row"><label>اسم الدواء *</label><input id="md-name" required value="${attr(m.name)}"></div>
+      <div class="form-grid two">
+        <div class="row"><label>الجرعة</label><input id="md-dose" value="${attr(m.dose)}" placeholder="مثال: 5 ملغ"></div>
+        <div class="row"><label>عدد المرات</label><input id="md-freq" value="${attr(m.freq)}" placeholder="مرة يومياً"></div>
+      </div>
+      <div class="row"><label>ملاحظة</label><input id="md-note" value="${attr(m.note)}"></div>
+      <div class="form-actions">
+        <button class="btn" type="submit">حفظ</button>
+        <button class="btn ghost" type="button" onclick="closeDialog()">إلغاء</button>
+      </div>
+    </form>`);
+}
+function saveMed(e,id){
+  e.preventDefault();
+  upsert("meds",{ id:id||uid(), name:val("md-name"), dose:val("md-dose"), freq:val("md-freq"), note:val("md-note") });
+  closeDialog(); renderAll();
+}
+
+/* =========================================================
+   Generic CRUD + utils
+   ========================================================= */
+function upsert(coll, obj){
+  const i = data[coll].findIndex(x=>x.id===obj.id);
+  if(i>=0) data[coll][i]=obj; else data[coll].push(obj);
+  save();
+}
+function del(coll,id){
+  if(!confirm("هل تريد الحذف؟")) return;
+  data[coll]=data[coll].filter(x=>x.id!==id); save(); renderAll();
+}
+function val(id){ const e=document.getElementById(id); return e?e.value.trim():""; }
+function setVal(id,v){ const e=document.getElementById(id); if(e) e.value=v||""; }
+function today(){ return new Date().toISOString().slice(0,10); }
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function attr(s){ return esc(s).replace(/"/g,"&quot;"); }
+
+function flash(msg){
+  const d=document.createElement("div");
+  d.textContent=msg;
+  d.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a8f4c;color:#fff;padding:10px 18px;border-radius:10px;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.2);";
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),2200);
+}
+
+/* ---------- backup / restore ---------- */
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`qalbi-backup-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importData(ev){
+  const file=ev.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const incoming=JSON.parse(reader.result);
+      if(!confirm("سيتم استبدال بياناتك الحالية بمحتوى الملف. متابعة؟")) return;
+      data=Object.assign(structuredClone(defaultData), incoming);
+      save(); renderAll(); flash("تم الاستيراد بنجاح ✅");
+    }catch(e){ alert("ملف غير صالح."); }
+    ev.target.value="";
+  };
+  reader.readAsText(file);
+}
+
+/* =========================================================
+   Render dispatcher
+   ========================================================= */
+function renderAll(){
+  renderDashboard();
+  renderAppts();
+  renderLabs();
+  renderReports();
+  renderLeaves();
+  renderSummary();
+}
+renderAll();
+</script>
+</body>
+</html>
