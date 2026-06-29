@@ -1,6 +1,6 @@
 /* Service Worker — قلبي
    يخزّن ملفات التطبيق ليعمل بدون إنترنت ويُثبَّت كتطبيق. */
-const CACHE = "qalbi-v3";
+const CACHE = "qalbi-v4";
 const ASSETS = [
   "./",
   "./index.html",
