@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#6f7d2e">
+<meta name="theme-color" content="#5a6626">
 <title>قلبي — متابعة صحة القلب</title>
 <link rel="stylesheet" href="fonts/cairo.css">
 <link rel="manifest" href="manifest.webmanifest">
@@ -15,8 +15,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <style>
   :root {
-    --primary: #6f7d2e;
-    --primary-dark: #545f1f;
+    --primary: #5a6626;
+    --primary-dark: #444d1a;
     --primary-light: #eef0dc;
     --bg: #f6f7fb;
     --card: #ffffff;
@@ -30,8 +30,8 @@
     --radius: 14px;
   }
   body.dark {
-    --primary: #aebd52;
-    --primary-dark: #6f7d2e;
+    --primary: #98a647;
+    --primary-dark: #5a6626;
     --primary-light: #2a2e16;
     --bg: #13151b;
     --card: #1d2027;
@@ -69,10 +69,10 @@
     position: relative;
     background:
       radial-gradient(1200px 200px at 80% -40%, rgba(255,255,255,.18), transparent 60%),
-      linear-gradient(135deg, #8a9a3c, var(--primary) 45%, var(--primary-dark));
+      linear-gradient(135deg, #707e30, var(--primary) 45%, var(--primary-dark));
     color: #fff;
     padding: 20px 16px 14px;
-    box-shadow: 0 6px 22px rgba(84,95,31,.28);
+    box-shadow: 0 6px 22px rgba(68,77,26,.28);
     overflow: hidden;
   }
   .header-inner {
@@ -151,7 +151,7 @@
     color: #fff;
     border-color: var(--primary);
     font-weight: 700;
-    box-shadow: 0 4px 12px rgba(111,125,46,.3);
+    box-shadow: 0 4px 12px rgba(90,102,38,.3);
   }
 
   .card {
@@ -178,7 +178,7 @@
   }
   .stat .num {
     font-size: 1.8rem; font-weight: 800; line-height: 1.1;
-    background: linear-gradient(135deg, var(--primary), #aebd52);
+    background: linear-gradient(135deg, var(--primary), #98a647);
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   }
   .stat .lbl { font-size: .82rem; color: var(--muted); margin-top: 2px; }
@@ -192,7 +192,7 @@
   .countdown {
     display:inline-flex; align-items:center; gap:5px;
     background: var(--primary); color: #fff; padding: 4px 13px; border-radius: 999px;
-    font-size:.82rem; font-weight:700; box-shadow: 0 3px 10px rgba(111,125,46,.35);
+    font-size:.82rem; font-weight:700; box-shadow: 0 3px 10px rgba(90,102,38,.35);
   }
   .countdown::before { content:""; width:7px; height:7px; border-radius:50%; background:#fff; animation: blip 1.2s ease-in-out infinite; }
   @keyframes blip { 0%,100%{opacity:.4; transform:scale(.8)} 50%{opacity:1; transform:scale(1.3)} }
@@ -207,9 +207,9 @@
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color:#fff; border:none; font-family: inherit; font-weight: 700;
     padding: 9px 17px; border-radius: 10px; cursor: pointer; font-size:.9rem;
-    box-shadow: 0 3px 10px rgba(111,125,46,.28); transition: transform .12s ease, box-shadow .12s ease;
+    box-shadow: 0 3px 10px rgba(90,102,38,.28); transition: transform .12s ease, box-shadow .12s ease;
   }
-  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(111,125,46,.36); }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(90,102,38,.36); }
   .btn:active { transform: translateY(0); }
   .btn.ghost { background: transparent; color: var(--primary); border:1px solid var(--primary); box-shadow:none; }
   .btn.ghost:hover { background: var(--primary-light); transform:none; box-shadow:none; }
@@ -719,10 +719,10 @@ function renderDashboard(){
       <div style="margin:6px 0;">
         <span class="countdown">${cd}</span>
       </div>
-      <div style="color:var(--muted);font-size:.9rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        ${n.clinic?(ic("hospital")+" "+esc(n.clinic)):""}
-        ${n.doctor?("· "+ic("user")+" "+esc(n.doctor)):""}
-        ${n.reason?("· "+esc(n.reason)):""}
+      <div style="margin-top:8px;display:grid;gap:7px;color:var(--muted);font-size:.9rem;">
+        ${n.clinic?`<div style="display:flex;gap:7px;align-items:flex-start;">${ic("hospital")}<span>${esc(n.clinic)}</span></div>`:""}
+        ${n.doctor?`<div style="display:flex;gap:7px;align-items:flex-start;">${ic("user")}<span>${esc(n.doctor)}</span></div>`:""}
+        ${n.reason?`<div style="display:flex;gap:7px;align-items:flex-start;">${ic("info")}<span>${esc(n.reason)}</span></div>`:""}
       </div>`;
   } else {
     card.innerHTML = `<p class="hint" style="margin:0 0 6px;display:flex;align-items:center;gap:6px;">${ic("clock")} موعدك القادم</p>
@@ -883,7 +883,7 @@ function valStatus(type, v){
   if(v > r.high) return "high";
   return "ok";
 }
-function statusColor(s){ return s==="ok" ? "#1a8f4c" : s==="none" ? "#6f7d2e" : "#c2334d"; }
+function statusColor(s){ return s==="ok" ? "#1a8f4c" : s==="none" ? "#5a6626" : "#c2334d"; }
 
 function drawChart(series){
   const type = series.length ? series[0].type : null;
@@ -1457,7 +1457,7 @@ function applyTheme(t){
   const btn=document.getElementById("themeBtn");
   if(btn){ btn.innerHTML = ic(dark ? "sun" : "moon"); btn.title = dark ? "الوضع النهاري" : "الوضع الليلي"; }
   const meta=document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute("content", dark ? "#13151b" : "#6f7d2e");
+  if(meta) meta.setAttribute("content", dark ? "#13151b" : "#5a6626");
 }
 function toggleTheme(){
   const next = document.body.classList.contains("dark") ? "light" : "dark";
