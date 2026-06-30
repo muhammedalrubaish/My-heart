@@ -220,10 +220,16 @@
   form .row { margin-bottom: 12px; }
   form label { display:block; font-size:.85rem; color: var(--muted); margin-bottom: 5px; }
   form input, form select, form textarea {
-    width: 100%; padding: 9px 11px; border:1px solid var(--border); border-radius: 9px;
+    width: 100%; max-width: 100%; min-width: 0; padding: 9px 11px; border:1px solid var(--border); border-radius: 9px;
     font-family: inherit; font-size:.9rem; background:#fff;
   }
   form textarea { resize: vertical; min-height: 60px; }
+  /* إصلاح تجاوز حقول التاريخ/الوقت لعرض الهاتف (iOS Safari) */
+  input[type="date"], input[type="time"] {
+    -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%;
+    box-sizing: border-box;
+  }
+  input[type="date"]::-webkit-date-and-time-value { text-align: right; margin: 0; }
   form .form-grid { display: grid; gap: 12px; }
   @media (min-width:600px){ form .form-grid.two { grid-template-columns:1fr 1fr; } form .form-grid.three { grid-template-columns:1fr 1fr 1fr; } }
   .form-actions { display:flex; gap:8px; margin-top: 4px; }
