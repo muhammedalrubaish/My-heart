@@ -377,6 +377,9 @@
   .rec-val { color:var(--text); word-break: break-word; }
   .rec-actions { display:flex; gap:4px; flex-wrap:wrap; margin-top:10px; padding-top:8px; border-top:1px solid var(--border); }
   .rec-actions .btn.sm { font-size:.78rem; padding:5px 10px; }
+  .med-desc { color: var(--text); opacity:.85; font-size:.88rem; line-height:1.6; margin:2px 0 8px; }
+  .med-card .rec-title .pill-ic { display:inline-flex; }
+  .med-card .rec-title .pill-ic .ic { width:1.25em; height:1.25em; }
 </style>
 </head>
 <body class="locked">
@@ -409,6 +412,7 @@
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+  <symbol id="i-pill" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></symbol>
 </defs></svg>
 
 <div id="lockScreen">
@@ -646,10 +650,11 @@ const SEED = {
     { id:"seed-lv2", from:"2026-06-28", to:"2026-06-28", days:1, issuer:"مركز الأمير سلطان للقلب — د. زكريا البن موسى", file:"sick-leave-2026-06-28.pdf", note:"مشهد مراجعة (صحتي) — رمز GSL26062821957 — من 8:42 إلى 11:42 صباحاً" }
   ],
   meds: [
-    { id:"seed-m1", name:"إمباغليفلوزين (Empagliflozin)", dose:"10 ملغ", freq:"كل صباح", note:"قرص فموي" },
-    { id:"seed-m2", name:"إنتريستو (Entresto — Valsartan+Sacubitril)", dose:"100 ملغ (200 ملغ)", freq:"مرتين يومياً (BID)", note:"" },
-    { id:"seed-m3", name:"إبليرينون (Eplerenone)", dose:"25 ملغ", freq:"مرة يومياً", note:"" },
-    { id:"seed-m4", name:"ميتوبرولول (Metoprolol)", dose:"50 ملغ", freq:"مرتين يومياً (BD)", note:"" }
+    { id:"seed-m1", name:"إمباغليفلوزين / جارديانس (Empagliflozin)", desc:"يخفض مستوى السكر في الدم ويحمي القلب والكلى من المضاعفات.", dose:"10 ملغ", freq:"مرة يومياً (كل صباح)", note:"قرص فموي" },
+    { id:"seed-m2", name:"إنتريستو (Entresto — Valsartan+Sacubitril)", desc:"لعلاج قصور القلب المزمن وتحسين كفاءة عضلة القلب.", dose:"100 ملغ (200 ملغ)", freq:"مرتين يومياً (BID)", note:"" },
+    { id:"seed-m3", name:"إبليرينون (Eplerenone)", desc:"مدرّ للبول يقلّل ضغط الدم بطرح الصوديوم والماء الزائد مع المحافظة على البوتاسيوم.", dose:"25 ملغ", freq:"مرة يومياً", note:"" },
+    { id:"seed-m4", name:"ميتوبرولول (Metoprolol)", desc:"حاصر بيتا — يبطّئ ضربات القلب ويقلّل قوة ضخّه وجهده وضغط الدم.", dose:"50 ملغ", freq:"مرتين يومياً (BD)", note:"" },
+    { id:"seed-m5", name:"بروكسين / نابروكسين (Naproxen)", desc:"مسكّن ومضاد للالتهاب لتخفيف الآلام مثل آلام المفاصل والعضلات والظهر.", dose:"500 ملغ", freq:"عند الحاجة", note:"انتهى جدوله الزمني في 3 أغسطس 2025" }
   ]
 };
 
@@ -1105,13 +1110,20 @@ function renderSummary(){
   setVal("pf-diagnosis",p.diagnosis); setVal("pf-allergies",p.allergies); setVal("pf-notes",p.notes);
   const box=document.getElementById("medsTable");
   if(!data.meds.length){ box.innerHTML=`<div class="empty">لا توجد أدوية مسجّلة.</div>`; return; }
-  box.innerHTML=`<table><thead><tr><th>الدواء</th><th>الجرعة</th><th>عدد المرات</th><th>ملاحظة</th><th></th></tr></thead><tbody>`+
-    data.meds.map(m=>`<tr>
-      <td><b>${esc(m.name)}</b></td><td>${esc(m.dose||"—")}</td><td>${esc(m.freq||"—")}</td><td>${esc(m.note||"—")}</td>
-      <td style="white-space:nowrap;">
+  box.innerHTML=`<div class="rec-list">` + data.meds.map(m=>`
+    <div class="rec-card med-card">
+      <div class="rec-head">
+        <div class="rec-title"><span class="pill-ic">${ic("pill")}</span> ${esc(m.name)}</div>
+        ${m.dose?`<span class="badge muted">${esc(m.dose)}</span>`:""}
+      </div>
+      ${m.desc?`<div class="med-desc">${esc(m.desc)}</div>`:""}
+      ${m.freq?`<div class="rec-row"><span class="rec-label">التكرار</span><span class="rec-val">${esc(m.freq)}</span></div>`:""}
+      ${m.note?`<div class="rec-row"><span class="rec-label">ملاحظة</span><span class="rec-val">${esc(m.note)}</span></div>`:""}
+      <div class="rec-actions">
         <button class="btn icon" onclick="openMedForm('${m.id}')">${ic("edit")}</button>
         <button class="btn icon" onclick="del('meds','${m.id}')">${ic("trash")}</button>
-      </td></tr>`).join("")+`</tbody></table>`;
+      </div>
+    </div>`).join("") + `</div>`;
 }
 function saveProfile(e){
   e.preventDefault();
@@ -1126,6 +1138,7 @@ function openMedForm(id){
   openDialog(id?"تعديل دواء":"دواء جديد",`
     <form onsubmit="saveMed(event,'${id||""}')">
       <div class="row"><label>اسم الدواء *</label><input id="md-name" required value="${attr(m.name)}"></div>
+      <div class="row"><label>وصف الدواء (ماذا يفعل)</label><textarea id="md-desc" placeholder="مثال: يقلّل ضغط الدم...">${esc(m.desc||"")}</textarea></div>
       <div class="form-grid two">
         <div class="row"><label>الجرعة</label><input id="md-dose" value="${attr(m.dose)}" placeholder="مثال: 5 ملغ"></div>
         <div class="row"><label>عدد المرات</label><input id="md-freq" value="${attr(m.freq)}" placeholder="مرة يومياً"></div>
@@ -1139,7 +1152,7 @@ function openMedForm(id){
 }
 function saveMed(e,id){
   e.preventDefault();
-  upsert("meds",{ id:id||uid(), name:val("md-name"), dose:val("md-dose"), freq:val("md-freq"), note:val("md-note") });
+  upsert("meds",{ id:id||uid(), name:val("md-name"), desc:val("md-desc"), dose:val("md-dose"), freq:val("md-freq"), note:val("md-note") });
   closeDialog(); renderAll();
 }
 
