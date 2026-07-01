@@ -380,6 +380,35 @@
   .med-desc { color: var(--text); opacity:.85; font-size:.88rem; line-height:1.6; margin:2px 0 8px; }
   .med-card .rec-title .pill-ic { display:inline-flex; }
   .med-card .rec-title .pill-ic .ic { width:1.25em; height:1.25em; }
+
+  /* قائمة أدوية اليوم (متابعة التناول) */
+  .medcheck { display:flex; align-items:center; gap:11px; padding:10px 4px; border-bottom:1px dashed var(--border); cursor:pointer; }
+  .medcheck:last-child { border-bottom:none; }
+  .medcheck input { width:21px; height:21px; accent-color:var(--primary); flex:0 0 auto; cursor:pointer; }
+  .medcheck .mc-name { font-weight:700; }
+  .medcheck .mc-sub { color:var(--muted); font-size:.8rem; }
+  .medcheck.taken .mc-name { text-decoration:line-through; opacity:.55; }
+
+  /* نتائج البحث الشامل */
+  .sr-item { padding:10px 12px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; cursor:pointer; background:var(--card); }
+  .sr-item:hover { border-color:var(--primary); background:var(--primary-light); }
+  .sr-title { font-weight:700; margin-top:3px; }
+  .sr-sub { color:var(--muted); font-size:.8rem; }
+
+  /* الملخص الطبي القابل للطباعة */
+  #printArea { display:none; }
+  @media print {
+    body.printing > :not(#printArea) { display:none !important; }
+    body.printing #printArea { display:block; color:#000; font-family:"Cairo", sans-serif; }
+    #printArea h1 { font-size:17pt; margin:0 0 2pt; }
+    #printArea h2 { font-size:12.5pt; margin:14pt 0 6pt; border-bottom:1.5pt solid #333; padding-bottom:3pt; }
+    #printArea .pr-meta { color:#555; font-size:9pt; margin:0 0 10pt; }
+    #printArea table { width:100%; border-collapse:collapse; font-size:10pt; }
+    #printArea th, #printArea td { border:1px solid #888; padding:4pt 6pt; text-align:right; }
+    #printArea th { background:#eee; }
+    #printArea .pr-notes { font-size:10pt; }
+    #printArea .pr-foot { margin-top:14pt; font-size:8pt; color:#666; }
+  }
 </style>
 </head>
 <body class="locked">
@@ -413,6 +442,7 @@
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
   <symbol id="i-pill" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
 </defs></svg>
 
 <div id="lockScreen">
@@ -436,6 +466,8 @@
       </div>
     </div>
     <div class="header-actions">
+      <button onclick="openSearch()" title="بحث شامل" aria-label="بحث شامل"><svg class="ic"><use href="#i-search"></use></svg></button>
+      <button onclick="printSummary()" title="طباعة ملخص للطبيب" aria-label="طباعة ملخص للطبيب"><svg class="ic"><use href="#i-print"></use></svg></button>
       <button id="themeBtn" onclick="toggleTheme()" title="الوضع الليلي" aria-label="الوضع الليلي"><svg class="ic"><use href="#i-moon"></use></svg></button>
       <button onclick="exportData()" title="نسخة احتياطية" aria-label="نسخة احتياطية"><svg class="ic"><use href="#i-download"></use></svg></button>
       <button onclick="document.getElementById('importFile').click()" title="استيراد" aria-label="استيراد"><svg class="ic"><use href="#i-upload"></use></svg></button>
@@ -471,6 +503,7 @@
     <div class="reminders" id="reminders"></div>
     <div class="card next-appt" id="nextApptCard"></div>
     <div class="grid cols-3" id="dashStats"></div>
+    <div class="card" id="medTodayCard" style="margin-top:16px;"></div>
     <div class="card">
       <h2>آخر التحاليل المسجّلة</h2>
       <p class="hint">أحدث القيم التي أدخلتها لكل نوع تحليل.</p>
@@ -552,6 +585,7 @@
           <div class="row"><label>الاسم</label><input name="name" id="pf-name"></div>
           <div class="row"><label>تاريخ الميلاد</label><input type="date" name="dob" id="pf-dob"></div>
           <div class="row"><label>فصيلة الدم</label><input name="blood" id="pf-blood" placeholder="مثال: O+"></div>
+          <div class="row"><label>الطول (سم) — لحساب مؤشر كتلة الجسم</label><input type="number" name="height" id="pf-height" placeholder="مثال: 170" min="50" max="250"></div>
           <div class="row"><label>التشخيص الأساسي</label><input name="diagnosis" id="pf-diagnosis" placeholder="مثال: ارتفاع ضغط الدم"></div>
         </div>
         <div class="row"><label>الحساسية / تنبيهات مهمة</label><textarea name="allergies" id="pf-allergies"></textarea></div>
@@ -599,12 +633,13 @@
 const STORE_KEY = "qalbi_data_v1";
 
 const defaultData = {
-  profile: { name:"", dob:"", blood:"", diagnosis:"", allergies:"", notes:"" },
+  profile: { name:"", dob:"", blood:"", height:"", diagnosis:"", allergies:"", notes:"" },
   appointments: [], // {id, date, time, clinic, doctor, reason, done}
   labs: [],         // {id, date, type, value, unit, note}
   reports: [],      // {id, date, title, type, file, note}
   leaves: [],       // {id, from, to, days, issuer, file, note}
-  meds: []          // {id, name, dose, freq, note}
+  meds: [],         // {id, name, desc, dose, freq, note}
+  medlog: {}        // {"YYYY-MM-DD": [medId, ...]} — الأدوية المأخوذة كل يوم
 };
 
 const LAB_TYPES = [
@@ -742,10 +777,17 @@ function renderDashboard(){
 
   // stats
   const upcomingCount = data.appointments.filter(a=>!a.done && daysUntil(a.date)>=0).length;
+  const age = calcAge(data.profile.dob);
+  const lastWeight = latestLabOf("weight");
+  const bmi = bmiInfo();
   document.getElementById("dashStats").innerHTML = `
     <div class="stat"><div class="num">${upcomingCount}</div><div class="lbl">مواعيد قادمة</div></div>
     <div class="stat"><div class="num">${data.reports.length}</div><div class="lbl">تقارير محفوظة</div></div>
-    <div class="stat"><div class="num">${data.labs.length}</div><div class="lbl">قياسات مسجّلة</div></div>`;
+    <div class="stat"><div class="num">${data.labs.length}</div><div class="lbl">قياسات مسجّلة</div></div>
+    <div class="stat"><div class="num">${age!=null?age:"—"}</div><div class="lbl">العمر (سنة)</div></div>
+    <div class="stat"><div class="num">${lastWeight?esc(lastWeight.value):"—"}</div><div class="lbl">آخر وزن (كجم)</div></div>
+    <div class="stat"><div class="num">${bmi?bmi.v:"—"}</div><div class="lbl">${bmi?`كتلة الجسم — ${bmi.lbl}`:"كتلة الجسم (أضف طولك)"}</div></div>`;
+  renderMedToday();
 
   // latest labs per type
   const latest = {};
@@ -762,6 +804,145 @@ function renderDashboard(){
     box.innerHTML = `<div class="empty">لا توجد قياسات بعد. <button class="btn sm" onclick="openLabForm()">${ic("plus")} أضف قياس</button></div>`;
   }
 }
+
+/* ---------- مؤشرات صحية: العمر ومؤشر كتلة الجسم ---------- */
+function calcAge(dob){
+  if(!dob) return null;
+  const b=new Date(dob+"T00:00:00"), n=new Date();
+  if(isNaN(b)) return null;
+  let a=n.getFullYear()-b.getFullYear();
+  const m=n.getMonth()-b.getMonth();
+  if(m<0 || (m===0 && n.getDate()<b.getDate())) a--;
+  return a>=0 ? a : null;
+}
+function latestLabOf(type){
+  let best=null;
+  data.labs.forEach(l=>{ if(l.type===type && (!best || l.date>best.date)) best=l; });
+  return best;
+}
+function bmiInfo(){
+  const w=latestLabOf("weight");
+  const h=parseFloat(data.profile.height);
+  if(!w || !h) return null;
+  const v=parseFloat(w.value)/Math.pow(h/100,2);
+  if(!isFinite(v) || v<=0) return null;
+  let lbl,cls;
+  if(v<18.5){ lbl="نحافة"; cls="warn"; }
+  else if(v<25){ lbl="طبيعي"; cls="ok"; }
+  else if(v<30){ lbl="زيادة وزن"; cls="warn"; }
+  else { lbl="سمنة"; cls="danger"; }
+  return { v:v.toFixed(1), lbl, cls };
+}
+
+/* ---------- متابعة تناول الأدوية اليومية ---------- */
+function renderMedToday(){
+  const card=document.getElementById("medTodayCard"); if(!card) return;
+  if(!data.meds.length){ card.style.display="none"; return; }
+  card.style.display="";
+  if(!data.medlog) data.medlog={};
+  const taken=data.medlog[today()]||[];
+  const done=data.meds.filter(m=>taken.includes(m.id)).length;
+  const all=done===data.meds.length;
+  card.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+      <h2 style="display:flex;align-items:center;gap:7px;margin:0;">${ic("pill")} أدوية اليوم</h2>
+      <span class="badge ${all?"ok":"warn"}">${all?"اكتملت ✓ ":""}${done} من ${data.meds.length}</span>
+    </div>
+    <p class="hint">علّم على كل دواء بعد تناوله — تُصفَّر القائمة تلقائياً كل يوم.</p>
+    ${data.meds.map(m=>{
+      const t=taken.includes(m.id);
+      return `<label class="medcheck ${t?"taken":""}">
+        <input type="checkbox" ${t?"checked":""} onchange="toggleMedTaken('${m.id}')">
+        <span><span class="mc-name">${esc(m.name)}</span>
+        <span class="mc-sub">${esc(m.dose||"")}${m.freq?" · "+esc(m.freq):""}</span></span>
+      </label>`;
+    }).join("")}`;
+}
+function toggleMedTaken(id){
+  if(!data.medlog) data.medlog={};
+  const k=today();
+  let arr=data.medlog[k]||[];
+  arr = arr.includes(id) ? arr.filter(x=>x!==id) : arr.concat(id);
+  data.medlog[k]=arr;
+  // تنظيف السجلات الأقدم من 90 يوماً حتى لا يتضخم التخزين
+  const cutoff=new Date(Date.now()-90*86400000).toISOString().slice(0,10);
+  Object.keys(data.medlog).forEach(d=>{ if(d<cutoff) delete data.medlog[d]; });
+  save(); renderMedToday();
+}
+
+/* ---------- بحث شامل في كل الأقسام ---------- */
+function openSearch(){
+  openDialog("بحث شامل", `
+    <input id="searchInput" oninput="runSearch()" placeholder="ابحث في المواعيد، التحاليل، التقارير، الإجازات، الأدوية..."
+      style="width:100%;padding:11px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.95rem;background:inherit;color:inherit;">
+    <div id="searchResults" style="margin-top:12px;max-height:55vh;overflow-y:auto;"></div>`);
+  setTimeout(()=>{ const i=document.getElementById("searchInput"); if(i) i.focus(); },60);
+}
+function runSearch(){
+  const q=(document.getElementById("searchInput").value||"").trim().toLowerCase();
+  const box=document.getElementById("searchResults");
+  if(q.length<2){ box.innerHTML=""; return; }
+  const hit=s=> s && String(s).toLowerCase().includes(q);
+  const res=[];
+  data.appointments.forEach(a=>{ if(hit(a.clinic)||hit(a.doctor)||hit(a.reason)||hit(a.date))
+    res.push({tab:"appts", type:"موعد", title:a.clinic||"موعد", sub:fmtDate(a.date)+(a.doctor?" · "+a.doctor:"")}); });
+  data.labs.forEach(l=>{ if(hit(labLabel(l.type))||hit(l.note)||hit(l.value)||hit(l.date))
+    res.push({tab:"labs", type:"تحليل", title:labLabel(l.type)+" — "+l.value+" "+(l.unit||labUnit(l.type)), sub:fmtDate(l.date)}); });
+  data.reports.forEach(r=>{ if(hit(r.title)||hit(r.note)||hit(r.type)||hit(r.date))
+    res.push({tab:"reports", type:"تقرير", title:r.title, sub:fmtDate(r.date)}); });
+  data.leaves.forEach(l=>{ if(hit(l.issuer)||hit(l.note)||hit(l.from))
+    res.push({tab:"leaves", type:"إجازة", title:"إجازة مرضية — "+fmtDate(l.from), sub:l.issuer||""}); });
+  data.meds.forEach(m=>{ if(hit(m.name)||hit(m.desc)||hit(m.note)||hit(m.freq))
+    res.push({tab:"summary", type:"دواء", title:m.name, sub:m.dose||""}); });
+  if(!res.length){ box.innerHTML=`<div class="empty">لا توجد نتائج لـ «${esc(q)}».</div>`; return; }
+  box.innerHTML = res.slice(0,30).map(r=>`
+    <div class="sr-item" onclick="gotoTab('${r.tab}')">
+      <span class="badge muted">${r.type}</span>
+      <div class="sr-title">${esc(r.title)}</div>
+      ${r.sub?`<div class="sr-sub">${esc(r.sub)}</div>`:""}
+    </div>`).join("");
+}
+function gotoTab(tab){
+  closeDialog();
+  const b=document.querySelector(`#tabs button[data-tab="${tab}"]`);
+  if(b) b.click();
+}
+
+/* ---------- طباعة ملخص طبي للطبيب (PDF عبر الطباعة) ---------- */
+function printSummary(){
+  const p=data.profile||{};
+  const age=calcAge(p.dob);
+  const bmi=bmiInfo();
+  const upcoming=data.appointments.filter(a=>!a.done && daysUntil(a.date)>=0).sort((a,b)=>a.date.localeCompare(b.date));
+  const latest={};
+  data.labs.forEach(l=>{ if(!latest[l.type] || l.date>latest[l.type].date) latest[l.type]=l; });
+  const labRows=Object.keys(latest).map(k=>{ const l=latest[k];
+    return `<tr><td>${esc(labLabel(k))}</td><td>${esc(l.value)} ${esc(l.unit||labUnit(k))}</td><td>${fmtDate(l.date)}</td></tr>`; }).join("");
+  const medRows=data.meds.map(m=>`<tr><td>${esc(m.name)}</td><td>${esc(m.dose||"—")}</td><td>${esc(m.freq||"—")}</td></tr>`).join("");
+  const apptRows=upcoming.map(a=>`<tr><td>${fmtDate(a.date)}${a.time?" · "+esc(a.time):""}</td><td>${esc(a.clinic||"—")}</td><td>${esc(a.doctor||"—")}</td></tr>`).join("");
+  let el=document.getElementById("printArea");
+  if(!el){ el=document.createElement("div"); el.id="printArea"; el.dir="rtl"; document.body.appendChild(el); }
+  el.innerHTML=`
+    <h1>الملخص الطبي${p.name?" — "+esc(p.name):""}</h1>
+    <p class="pr-meta">أُنشئ بتاريخ ${fmtDate(today())} عبر تطبيق «قلبي»</p>
+    <table><tbody>
+      <tr><th>الاسم</th><td>${esc(p.name||"—")}</td><th>تاريخ الميلاد</th><td>${p.dob?fmtDate(p.dob)+(age!=null?` (${age} سنة)`:""):"—"}</td></tr>
+      <tr><th>فصيلة الدم</th><td>${esc(p.blood||"—")}</td><th>الطول / كتلة الجسم</th><td>${p.height?esc(p.height)+" سم":"—"}${bmi?` / ${bmi.v} (${bmi.lbl})`:""}</td></tr>
+      <tr><th>التشخيص</th><td colspan="3">${esc(p.diagnosis||"—")}</td></tr>
+      <tr><th>الحساسية</th><td colspan="3">${esc(p.allergies||"—")}</td></tr>
+    </tbody></table>
+    <h2>الأدوية الحالية</h2>
+    ${medRows?`<table><thead><tr><th>الدواء</th><th>الجرعة</th><th>التكرار</th></tr></thead><tbody>${medRows}</tbody></table>`:"<p>لا توجد أدوية مسجّلة.</p>"}
+    <h2>آخر القياسات</h2>
+    ${labRows?`<table><thead><tr><th>التحليل</th><th>القيمة</th><th>التاريخ</th></tr></thead><tbody>${labRows}</tbody></table>`:"<p>لا توجد قياسات.</p>"}
+    <h2>المواعيد القادمة</h2>
+    ${apptRows?`<table><thead><tr><th>التاريخ</th><th>العيادة</th><th>الطبيب</th></tr></thead><tbody>${apptRows}</tbody></table>`:"<p>لا توجد مواعيد قادمة.</p>"}
+    ${p.notes?`<h2>التاريخ المرضي وملاحظات الطبيب</h2><p class="pr-notes">${esc(p.notes).replace(/\n/g,"<br>")}</p>`:""}
+    <p class="pr-foot">هذا الملخص مُولَّد من سجل شخصي ولا يُغني عن التقارير الرسمية.</p>`;
+  document.body.classList.add("printing");
+  window.print();
+}
+window.addEventListener("afterprint", ()=>document.body.classList.remove("printing"));
 
 /* =========================================================
    APPOINTMENTS
@@ -1106,7 +1287,7 @@ function calcDays(from,to){
    ========================================================= */
 function renderSummary(){
   const p=data.profile;
-  setVal("pf-name",p.name); setVal("pf-dob",p.dob); setVal("pf-blood",p.blood);
+  setVal("pf-name",p.name); setVal("pf-dob",p.dob); setVal("pf-blood",p.blood); setVal("pf-height",p.height);
   setVal("pf-diagnosis",p.diagnosis); setVal("pf-allergies",p.allergies); setVal("pf-notes",p.notes);
   const box=document.getElementById("medsTable");
   if(!data.meds.length){ box.innerHTML=`<div class="empty">لا توجد أدوية مسجّلة.</div>`; return; }
@@ -1128,10 +1309,10 @@ function renderSummary(){
 function saveProfile(e){
   e.preventDefault();
   data.profile = {
-    name:val("pf-name"), dob:val("pf-dob"), blood:val("pf-blood"),
+    name:val("pf-name"), dob:val("pf-dob"), blood:val("pf-blood"), height:val("pf-height"),
     diagnosis:val("pf-diagnosis"), allergies:val("pf-allergies"), notes:val("pf-notes")
   };
-  save(); flash("تم حفظ المعلومات ✅");
+  save(); renderAll(); flash("تم حفظ المعلومات ✅");
 }
 function openMedForm(id){
   const m=id?data.meds.find(x=>x.id===id):{};
